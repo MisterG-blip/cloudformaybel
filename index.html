@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Cloud for Maybel</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="gameContainer">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="splashScreen">
+    <div id="splashContent">
+      <div class="splash-cloud">☁️</div>
+      <h1>A Cloud for Maybel</h1>
+      <p>Klicken zum Starten</p>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/scenerenderer.js"></script>
+<script src="js/hotspots.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/drag.js"></script>
+<script src="js/character.js"></script>
+<script src="js/actionbar.js"></script>
+<script src="js/cursor.js"></script>
+<script src="js/dialog.js"></script>
+<script src="js/game.js"></script>
+
+<script>
+  const splash = document.getElementById('splashScreen');
+  let done = false;
+
+  function start() {
+    if (done) return;
+    done = true;
+    splash.style.transition = 'opacity 0.7s';
+    splash.style.opacity    = '0';
+    setTimeout(() => {
+      splash.style.display = 'none';
+      const game = new Game();
+      game.start();
+    }, 700);
+  }
+
+  splash.addEventListener('click',      start);
+  splash.addEventListener('touchstart', start, { passive: true });
+  document.addEventListener('keydown',  start, { once: true });
+</script>
+</body>
+</html>
