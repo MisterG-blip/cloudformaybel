@@ -1,0 +1,36 @@
+{
+  "id": "roof_act1",
+  "screens": [{
+    "id": "screen_1",
+    "layers": [
+      { "src": "assets/scenes/roof/act1/bg.png", "placeholder": "#c8dff0" }
+    ],
+    "hotspots": [
+      {
+        "id": "abstieg",
+        "x": 340, "y": 380, "w": 80, "h": 80,
+        "label": "Leiter (runter)",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Die Leiter zurück zur Straße.",
+          "take": null,
+          "use":  { "goToScene": "street_act1" }
+        }
+      },
+      {
+        "id": "wolken",
+        "x": 200, "y": 60, "w": 400, "h": 180,
+        "label": "Wolken",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "So viele Wolken! Eine davon sieht besonders schön aus. Wie schön wäre es, sie zu besitzen...",
+          "take": null,
+          "use":  "Ich kann sie so nicht erreichen. Ich brauche etwas dafür."
+        }
+      }
+    ]
+  }],
+  "items": {}
+}

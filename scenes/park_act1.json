@@ -1,0 +1,48 @@
+{
+  "id": "park_act1",
+  "screens": [{
+    "id": "screen_1",
+    "layers": [
+      { "src": "assets/scenes/park/act1/bg.png", "placeholder": "#7ab648" }
+    ],
+    "hotspots": [
+      {
+        "id": "ausgang",
+        "x": 680, "y": 280, "w": 80, "h": 120,
+        "label": "Gartentor (zurück)",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Das Tor zurück zur Straße.",
+          "take": null,
+          "use":  { "goToScene": "street_act1" }
+        }
+      },
+      {
+        "id": "brunnen",
+        "x": 300, "y": 260, "w": 120, "h": 100,
+        "label": "Brunnen",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Ein alter Steinbrunnen. Das Wasser glitzert.",
+          "take": null,
+          "use":  "Das Wasser ist zu tief unten."
+        }
+      },
+      {
+        "id": "baum",
+        "x": 100, "y": 150, "w": 150, "h": 250,
+        "label": "Kastanienbaum",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Ein riesiger Kastanienbaum. Die Äste reichen fast bis zu den Wolken. Fast.",
+          "take": null,
+          "use":  "Der Baum ist zu glatt zum Klettern."
+        }
+      }
+    ]
+  }],
+  "items": {}
+}

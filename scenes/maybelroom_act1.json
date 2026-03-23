@@ -1,0 +1,88 @@
+{
+  "id": "maybelroom_act1",
+  "screens": [{
+    "id": "screen_1",
+    "layers": [
+      { "src": "assets/scenes/maybelroom/act1/bg.png", "placeholder": "#d4a8c7" }
+    ],
+    "walkarea": {
+      "points": [
+        { "x": 76,  "y": 580 },
+        { "x": 724, "y": 580 },
+        { "x": 661, "y": 403 },
+        { "x": 246, "y": 391 },
+        { "x": 113, "y": 403 }
+      ]
+    },
+    "depthscale": {
+      "yNear": 580,
+      "yFar":  395,
+      "scaleNear": 3.0,
+      "scaleFar":  1.5
+    },
+    "playerStart": { "x": 400, "y": 520 },
+    "hotspots": [
+      {
+        "id": "tuer_raus",
+        "x": 430, "y": 310, "w": 120, "h": 220,
+        "label": "Tür (raus)",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Die Tür nach draußen. Die Straße wartet.",
+          "take": "Eine Tür passt nicht in die Tasche. Aber vielleicht der Knauf?",
+          "use":  { "goToScene": "street_act1",
+            "arriveAt":  { "x": 685, "y": 430 }
+          }
+        }
+      },
+      {
+        "id": "schreibtisch",
+        "x": 0, "y": 300, "w": 220, "h": 140,
+        "label": "Schreibtisch",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Mein Schreibtisch. Hier habe ich schon für so einige Mathearbeiten gelernt. Da sind noch Schubladen!",
+          "take": "Meine Tasche ist nicht groß genug.",
+          "use":  "Hier ist noch Platz für etwas Großes..."
+        }
+      },
+      {
+        "id": "schublade",
+        "x": 0, "y": 440, "w": 220, "h": 140,
+        "label": "obere Schublade",
+        "condition": { "hotspotUsedWith": { "id": "schreibtisch", "action": "look" } },        
+        "actions": {
+          "look": "Eine halb geöffnete Schublade. Da glitzert was.",
+          "take": "schluessel",
+          "use":  "Ich ziehe die Schublade auf."
+        }
+      },
+      {
+        "id": "bett",
+        "x": 620, "y": 420, "w": 180, "h": 160,
+        "label": "Bett",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Mein Bett. Der Teddy schaut mich vorwurfsvoll an.",
+          "take": "Vielleicht nur das Kissen?",
+          "use":  "Keine Zeit zum Schlafen. Ich will eine Wolke fangen!"
+        }
+      },
+      {
+        "id": "radio",
+        "x": 285, "y": 295, "w": 60, "h": 50,
+        "label": "Radio",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Ein altes Radio. Es spielt leise Musik.",
+          "take": "Was soll ich mit einem Radio?",
+          "use":  "Ich drehe kurz lauter. ... Okay reicht... Fokus, Maybel! Fokus!"
+        }
+      }
+    ]
+  }]
+}
