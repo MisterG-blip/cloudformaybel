@@ -1,0 +1,136 @@
+{
+  "windessenz": {
+    "emoji": "💨", "label": "Windessenz",
+    "description": "Ein Hauch warmen Winds, eingefangen in der Luft.",
+    "src": "assets/items/windessenz.png"
+  },
+  "feder": {
+    "emoji": "🪶", "label": "Feder",
+    "description": "Eine silbrige Feder. Federleicht.",
+    "src": "assets/items/feder.png",
+    "combinesWith": { "windessenz": "windfaenger" }
+  },
+  "windfaenger": {
+    "emoji": "🌀", "label": "Windfänger",
+    "description": "Feder und Windessenz vereint. Summt leise.",
+    "src": "assets/items/windfaenger.png"
+  },
+  "schluessel": {
+    "emoji": "🗝️", "label": "Schlüssel",
+    "description": "Ein alter Messingschlüssel.",
+    "src": "assets/items/schluessel.png"
+  },
+  "schatulle": {
+    "emoji": "📦", "label": "Schatulle",
+    "description": "Eine alte Holzschatulle. Verschlossen.",
+    "src": "assets/items/schatulle.png",
+    "contains": "barometer_sehnsucht",
+    "unlockedBy": "schluessel",
+    "containsPuzzle": {
+      "type": "combination_lock",
+      "digits": 4,
+      "solution": [3, 7, 2, 1],
+      "hint": "Maybels Lieblingsjahreszahl?"
+    }
+  },
+  "kissen": {
+    "emoji": "⚙️", "label": "Kissen",
+    "description": "Ein Kissen. Wer wohl eins braucht?",
+    "src": "assets/items/kissen.png"
+  },
+
+  "barometer_sehnsucht": {
+    "emoji": "🧭", "label": "Barometer der Sehnsucht",
+    "description": "Ein typisches Manometer. Der Zeiger steht auf 'Maximum'.",
+    "src": "assets/items/barometer.png",
+    "machinemPart": true,
+    "act": 1
+  },
+  "wolkenharpune": {
+    "emoji": "🔭", "label": "Wolkenharpune",
+    "description": "Eine Art Zielvorrichtung. Fixiert Wolken mit einem Lichtstrahl.",
+    "src": "assets/items/wolkenharpune.png",
+    "machinePart": true,
+    "act": 1
+  },
+  "vakuumpumpe": {
+    "emoji": "🔧", "label": "Vakuumpumpe",
+    "description": "Saugt Wolken an. Surrt laut.",
+    "src": "assets/items/vakuumpumpe.png",
+    "machinePart": true,
+    "canContain" : "true",
+    "act": 1
+  },
+  "aetherkolben": {
+    "emoji": "🫙", "label": "Ätherkolben",
+    "description": "Ein durchsichtiger Behälter. Aufbewahrung für Wolken.",
+    "src": "assets/items/aetherkolben.png",
+    "machinePart": true,
+    "act": 1
+  },
+  "phlogiston_zange": {
+    "emoji": "⚡", "label": "Phlogiston-Zange",
+    "description": "Damit kann man Sachen einsammeln.",
+    "src": "assets/items/zange.png",
+    "machinePart": false,
+    "act": 1
+  },
+
+  "kosmisches_ei": {
+    "emoji": "🥚", "label": "Kosmisches Ei",
+    "description": "Warm. Pulsiert leise. Vielleicht gehört das woanders hin.",
+    "src": "assets/items/kosmisches_ei.png",
+    "easterEgg": true,
+    "act": 1
+  },
+  "homunkulus_phiole": {
+    "emoji": "🧪", "label": "Homunkulus Phiole",
+    "description": "Kein echtes Leben… nur eine Idee davon.",
+    "src": "assets/items/homunkulus_phiole.png",
+    "easterEgg": true,
+    "act": 1
+  },
+  "sulphorium_kristall": {
+    "emoji": "💎", "label": "Sulphorium-Kristall",
+    "description": "Die Seele der Materie. Oder doch ihre eigene?",
+    "src": "assets/items/sulphorium_kristall.png",
+    "easterEgg": true,
+    "act": 1
+  },
+
+  "prismabrille": {
+    "emoji": "🕶️", "label": "Prismabrille",
+    "description": "Zeigt Wolken in ihren wahren Farben. Hell und Dunkel.",
+    "src": "assets/items/prismabrille.png",
+    "machinePart": false,
+    "act": 2
+  },
+  "windfluestertute": {
+    "emoji": "📯", "label": "Windflüstertüte",
+    "description": "Ein Blechtrichter. Schiebt schlechte Wolken zur Seite.",
+    "src": "assets/items/windfluestertute.png",
+    "machinePart": true,
+    "act": 2
+  },
+  "traumdestillator": {
+    "emoji": "🌀", "label": "Traumdestillator",
+    "description": "Drückt Wolken aus. Setzt Albtraum-Essenz frei.",
+    "src": "assets/items/traumdestillator.png",
+    "machinePart": true,
+    "act": 2
+  },
+  "miasma_glas": {
+    "emoji": "🫧", "label": "Miasma-Glas",
+    "description": "Sammelt schlechte Luft. Macht alles nur schlimmer.",
+    "src": "assets/items/miasma_glas.png",
+    "machinePart": true,
+    "act": 2
+  },
+  "thermodynamisches_pendel": {
+    "emoji": "⏳", "label": "Thermodynamisches Pendel",
+    "description": "Soll Blitze abhalten. Wird durch Blitz zerstört.",
+    "src": "assets/items/thermodynamisches_pendel.png",
+    "machinePart": true,
+    "act": 2
+  }
+}

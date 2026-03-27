@@ -5,41 +5,131 @@
     "layers": [
       { "src": "assets/scenes/park/act1/bg.png", "placeholder": "#7ab648" }
     ],
-    "hotspots": [
+    "walkarea": {
+        "points": [
+          { "x": 200, "y": 520 },
+          { "x": 500, "y": 600 },
+          { "x": 800, "y": 600 },          
+          { "x": 800, "y": 400 },
+          { "x": 650, "y": 370 },
+          { "x": 800, "y": 340 },
+          { "x": 550, "y": 360 },
+          { "x": 480, "y": 400 },          
+          { "x": 450, "y": 520 }                 
+        ]
+      },
+      "depthscale": {
+        "yNear": 580,
+        "yFar": 395,
+        "scaleNear": 1.5,
+        "scaleFar": 0.5
+      },
+      "characterScale": 2.0,
+      "playerStart": {
+        "x": 400,
+        "y": 520
+      },
+    "objects": [
       {
         "id": "ausgang",
-        "x": 680, "y": 280, "w": 80, "h": 120,
+        "x": 740,
+        "y": 240,
+        "w": 60,
+        "h": 100,
         "label": "Gartentor (zurück)",
         "glow": null,
         "condition": null,
         "actions": {
           "look": "Das Tor zurück zur Straße.",
           "take": null,
-          "use":  { "goToScene": "street_act1" }
+          "use": {
+              "goToScene": "street_act1",
+              "arriveAt": {
+                "x":  30,
+                "y": 550
+              }
+            }
         }
       },
       {
-        "id": "brunnen",
-        "x": 300, "y": 260, "w": 120, "h": 100,
-        "label": "Brunnen",
+        "id": "teich",
+        "x": 680,
+        "y": 350,
+        "w": 120,
+        "h": 50,
+        "label": "Teich",
         "glow": null,
         "condition": null,
         "actions": {
-          "look": "Ein alter Steinbrunnen. Das Wasser glitzert.",
+          "look": "Ein kleiner Teich. Das Wasser glitzert. Irgendwas schimmert am Grund.",
+          "take": "phlogiston_zange",
+          "use":  "Das Wasser ist zu tief."
+        }
+      },
+      {
+        "id": "bank",
+        "x": 375,
+        "y": 330,
+        "w": 90,
+        "h": 150,
+        "label": "Bank",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Eine weitere, Holzbank.",
           "take": null,
-          "use":  "Das Wasser ist zu tief unten."
+          "use": "Ich setze mich kurz... nein, keine Zeit. Außerdem ist sie auch nass."
+          }
+        },
+      {
+        "id": "baumkrone",
+        "x": 200,
+        "y":  10,
+        "w": 300,
+        "h": 150,
+        "label": "Baumkrone",
+        "glow": null,
+        "condition": { "itemInInventory" : "phlogiston_zange"},
+        "actions": {
+          "look": "Irgendwas ist doch da oben in den Ästen",
+          "take": null,
+          "use":  "Ich komme da oben nicht mal an. Wie soll ich das dann >>benutzen<<? \n Nicht mal, wenn ich auf die Bank klettere. -.-",
+          "useWith": {
+              "phlogiston_zange": {
+                "text": "Du ziehst etwas aus der Baumkrone...",
+                "giveItem": "sulphorium_kristall" 
+              }
+            }
         }
       },
       {
         "id": "baum",
-        "x": 100, "y": 150, "w": 150, "h": 250,
+        "x": 200,
+        "y": 150,
+        "w": 150,
+        "h": 250,
         "label": "Kastanienbaum",
         "glow": null,
         "condition": null,
         "actions": {
-          "look": "Ein riesiger Kastanienbaum. Die Äste reichen fast bis zu den Wolken. Fast.",
+          "look": "Ein riesiger Kastanienbaum. Die Äste reichen fast bis zu den Wolken. Fast. So lange Arme habe ich trotzdem nicht.",
           "take": null,
           "use":  "Der Baum ist zu glatt zum Klettern."
+        }
+      },
+      {
+        "id": "hoehle",
+        "x": 240,
+        "y": 400,
+        "w": 75,
+        "h": 125,
+        "label": "Kaninchenbau",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Unten im Stamm lebt etwas. Ist es Alice?",
+          "take": null,
+          "use": { "goToScene": "cave_act1" }            
         }
       }
     ]

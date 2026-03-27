@@ -1,88 +1,144 @@
 {
   "id": "maybelroom_act1",
   "screens": [{
-    "id": "screen_1",
-    "layers": [
-      { "src": "assets/scenes/maybelroom/act1/bg.png", "placeholder": "#d4a8c7" }
-    ],
-    "walkarea": {
-      "points": [
-        { "x": 76,  "y": 580 },
-        { "x": 724, "y": 580 },
-        { "x": 661, "y": 403 },
-        { "x": 246, "y": 391 },
-        { "x": 113, "y": 403 }
-      ]
-    },
-    "depthscale": {
-      "yNear": 580,
-      "yFar":  395,
-      "scaleNear": 3.0,
-      "scaleFar":  1.5
-    },
-    "playerStart": { "x": 400, "y": 520 },
-    "hotspots": [
-      {
-        "id": "tuer_raus",
-        "x": 430, "y": 310, "w": 120, "h": 220,
-        "label": "Tür (raus)",
-        "glow": null,
-        "condition": null,
-        "actions": {
-          "look": "Die Tür nach draußen. Die Straße wartet.",
-          "take": "Eine Tür passt nicht in die Tasche. Aber vielleicht der Knauf?",
-          "use":  { "goToScene": "street_act1",
-            "arriveAt":  { "x": 685, "y": 430 }
+      "id": "screen_1",
+      "layers": [
+        { "src": "assets/scenes/maybelroom/act1/bg.png", "placeholder": "#d4a8c7" }
+      ],
+      "walkarea": {
+        "points": [
+          { "x": 0,   "y": 580 },
+          { "x": 0,   "y": 555 },
+          { "x": 110, "y": 555 },          
+          { "x": 226, "y": 460 },
+          { "x": 375, "y": 460 },
+          { "x": 490, "y": 475 },
+          { "x": 560, "y": 535 },          
+          { "x": 800, "y": 580 }                   
+        ]
+      },
+      "depthscale": {
+        "yNear": 580,
+        "yFar": 395,
+        "scaleNear": 1.5,
+        "scaleFar": 1.25
+      },
+      "characterScale": 2.0,
+      "playerStart": { "x": 400, "y": 520 },
+      "objects": [
+        {
+          "id": "tuer_raus",
+          "src": null,
+          "x": 230,
+          "y": 140,
+          "w": 120,
+          "h": 300,
+          "label": "Tür (raus)",
+          "glow": null,
+          "condition": null,
+          "walkTo": { "x": 490, "y": 520 },
+          "actions": {
+            "look": "Die Tür nach draußen. Die Straße wartet.",
+            "take": "Eine Tür passt nicht in die Tasche. Aber vielleicht der Knauf?",
+            "use": { "goToScene": "street_act1", "arriveAt": { "x": 685, "y": 430 }
+            }
+          }
+        },
+        {
+          "id": "schreibtisch",
+          "src": null,
+          "x": 0,
+          "y": 350,
+          "w": 220,
+          "h": 30,
+          "label": "Schreibtisch",
+          "glow": null,
+          "condition": null,
+          "walkTo": { "x": 160, "y": 440 },
+          "actions": {
+            "look": "Mein Schreibtisch. Hier habe ich schon für so einige Mathearbeiten gelernt. Da sind noch Schubladen!",
+            "take": "Meine Tasche ist nicht groß genug.",
+            "use": "Hier ist noch Platz für etwas Großes..."
+          }
+        },
+        {
+          "id": "schublade",
+          "src": null,
+          "x": 120,
+          "y": 390,
+          "w": 50,
+          "h": 120,
+          "label": "Schublade",
+          "glow": null,
+          "condition": {
+            "hotspotUsedWith": { "id": "schreibtisch", "action": "look" }
+          },
+          "walkTo": { "x": 160, "y": 440 },
+          "actions": {
+            "look": "Eine halb geöffnete Schublade. Da liegt eine alte Holzschatulle drin!",
+            "take": "schatulle",
+            "use": "Ich wühle kurz durch den Kram..."
+          }
+        },        
+        {
+          "id": "bett",
+          "src": null,
+          "x": 500,
+          "y": 320,
+          "w": 250,
+          "h": 160,
+          "label": "Bett",
+          "glow": null,
+          "condition": {"hotspotNotUsed": { "id": "bett", "action": "take" }
+          },
+          "walkTo": { "x": 430, "y": 511 },
+          "actions": {
+            "look": "Mein Bett. Der Teddy schaut mich vorwurfsvoll an.",
+            "take": "Vielleicht nur das Kissen?",
+            "use": "Keine Zeit zum Schlafen. Ich will eine Wolke fangen!"
+          }
+        },
+        {
+          "id": "kissen",
+          "src": "assets/items/kissen.png",
+          "x": 600,
+          "y": 360,
+          "w": 90,
+          "h": 90,
+          "label": "Kissen",
+          "glow": null,
+          "condition": {
+            "itemNotInInventory": "kissen"
+          },
+          "clickable": {"hotspotUsedWith": { "id": "bett", "action": "take" }
+          },
+          "walkTo": { "x": 430, "y": 511 },
+          "actions": {
+            "look": "Ja! das ist ein Kissen!",
+            "take": "kissen",
+            "use":  "Es ist weich."
+          }
+        },
+        {
+          "id": "radio",
+          "x": 160,
+          "y": 240,
+          "w": 40,
+          "h": 25,
+          "label": "Radio",
+          "glow": null,
+          "condition": null,
+          "walkTo": {
+            "x": 350,
+            "y": 520
+          },
+          "actions": {
+            "look": "Ein altes Radio. Es spielt leise Musik.",
+            "take": "Was soll ich mit einem Radio? Ich will doch eine Wolke!",
+            "use": "Ich drehe kurz lauter. ... Okay reicht... Fokus, Maybel! Fokus!"
           }
         }
-      },
-      {
-        "id": "schreibtisch",
-        "x": 0, "y": 300, "w": 220, "h": 140,
-        "label": "Schreibtisch",
-        "glow": null,
-        "condition": null,
-        "actions": {
-          "look": "Mein Schreibtisch. Hier habe ich schon für so einige Mathearbeiten gelernt. Da sind noch Schubladen!",
-          "take": "Meine Tasche ist nicht groß genug.",
-          "use":  "Hier ist noch Platz für etwas Großes..."
-        }
-      },
-      {
-        "id": "schublade",
-        "x": 0, "y": 440, "w": 220, "h": 140,
-        "label": "obere Schublade",
-        "condition": { "hotspotUsedWith": { "id": "schreibtisch", "action": "look" } },        
-        "actions": {
-          "look": "Eine halb geöffnete Schublade. Da glitzert was.",
-          "take": "schluessel",
-          "use":  "Ich ziehe die Schublade auf."
-        }
-      },
-      {
-        "id": "bett",
-        "x": 620, "y": 420, "w": 180, "h": 160,
-        "label": "Bett",
-        "glow": null,
-        "condition": null,
-        "actions": {
-          "look": "Mein Bett. Der Teddy schaut mich vorwurfsvoll an.",
-          "take": "Vielleicht nur das Kissen?",
-          "use":  "Keine Zeit zum Schlafen. Ich will eine Wolke fangen!"
-        }
-      },
-      {
-        "id": "radio",
-        "x": 285, "y": 295, "w": 60, "h": 50,
-        "label": "Radio",
-        "glow": null,
-        "condition": null,
-        "actions": {
-          "look": "Ein altes Radio. Es spielt leise Musik.",
-          "take": "Was soll ich mit einem Radio?",
-          "use":  "Ich drehe kurz lauter. ... Okay reicht... Fokus, Maybel! Fokus!"
-        }
-      }
-    ]
-  }]
+      ]
+    }
+  ]
 }

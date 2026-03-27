@@ -1,0 +1,54 @@
+{
+  "id": "park_act1",
+  "screens": [{
+    "id": "screen_1",
+    "layers": [
+      { "src": "assets/scenes/cave/act1/bg.png", "placeholder": "#7ab648" }
+    ],
+    "walkarea": {
+        "points": [
+          { "x": 250, "y": 600 },
+          { "x": 550, "y": 600 }, 
+
+          { "x": 650, "y": 400 }, 
+          { "x": 150, "y": 400 }                
+        ]
+      },
+      "depthscale": {
+        "yNear": 580,
+        "yFar": 395,
+        "scaleNear": 1.5,
+        "scaleFar":  1.5
+      },
+      "characterScale": 2.0,
+      "playerStart": {
+        "x": 599,
+        "y": 479
+      },
+    "objects": [
+      {
+        "id": "ausgang",
+        "x": 340,
+        "y": 10,
+        "w": 100,
+        "h": 60,
+        "label": "Ausgang zum Park",
+        "glow": null,
+        "condition": null,
+        "actions": {
+          "look": "Das ist ein Erdloch.",
+          "take": null,
+          "use": {
+              "goToScene": "park_act1",
+              "arriveAt": {
+                "x": 306,
+                "y": 531
+              }
+            }
+        }
+      }
+     
+    ]
+  }],
+  "items": {}
+}
