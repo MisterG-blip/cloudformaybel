@@ -1,148 +1,137 @@
 // ============================================================================
 // HOTSPOT SYSTEM – A Cloud for Maybel
-// Liest Hotspots aus der Szenen-JSON, prüft Bedingungen, reagiert auf Klicks.
-// Glow: zwei PNG-Frames die langsam wechseln (kein Canvas-Glow mehr).
+// Liest Hotspots aus screen.objects (unified format).
+// Jedes Object ist gleichzeitig Dekoration + Hotspot.
 // ============================================================================
 
 class HotspotSystem {
   constructor() {
-    this.hotspots  = [];
-    this.glowTimer = 0;    // Zeitgeber für Frame-Wechsel
-    this.glowFrame = 0;    // 0 oder 1 (welches der zwei Bilder gerade sichtbar ist)
-    this.images    = {};   // gecachte Image-Objekte { src: HTMLImageElement }
-    this.hintsOn   = true; // Glow an/aus (Hint-System)
+    this.objects = [];   // aktuelle Objects des Screens
+  }
+
+  load(objectList) {
+    this.objects = objectList || [];
   }
 
   // -------------------------------------------------------------------------
-  // Hotspots laden + Glow-Bilder vorladen
+  // Condition prüfen
   // -------------------------------------------------------------------------
-  load(hotspotList) {
-    this.hotspots = hotspotList || [];
-    this._preloadGlowImages();
-  }
-
-  _preloadGlowImages() {
-    for (const hs of this.hotspots) {
-      if (!hs.glow?.frames) continue;
-      for (const src of hs.glow.frames) {
-        if (this.images[src]) continue;
-        const img = new Image();
-        img.src = src;
-        // Kein onload-Handler nötig – wenn das Bild noch lädt,
-        // überspringen wir es einfach beim Zeichnen.
-        this.images[src] = img;
-      }
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Bedingung prüfen
-  // -------------------------------------------------------------------------
-  _checkCondition(hotspot, inventory, usedHotspots = new Set()) {
-    const c = hotspot.condition;
+  _checkCondition(c, inventory, usedHotspots) {
     if (!c) return true;
+    if (c.allConditions) return c.allConditions.every(sub => this._checkCondition(sub, inventory, usedHotspots));
     if (c.itemNotInInventory)  return !inventory.has(c.itemNotInInventory);
-    if (c.allItemsInInventory) return c.allItemsInInventory.every(id => inventory.has(id));
     if (c.itemInInventory)     return inventory.has(c.itemInInventory);
+    if (c.allItemsInInventory) return c.allItemsInInventory.every(id => inventory.has(id));
     if (c.hotspotUsed)         return usedHotspots.has(c.hotspotUsed);
+    if (c.hotspotUsedWith) {
+      const actions = usedHotspots.get(c.hotspotUsedWith.id);
+      return actions ? actions.has(c.hotspotUsedWith.action) : false;
+    }
+    if (c.hotspotNotUsed) {
+      const actions = usedHotspots?.get(c.hotspotNotUsed.id);
+      return actions ? !actions.has(c.hotspotNotUsed.action) : true;
+    }
+    // Easter Egg verschwindet nach Trigger
+    if (c.eggNotSeen) return !usedHotspots.has(`__egg_seen_${c.eggNotSeen}`);
     return true;
   }
 
-  activeHotspots(inventory, usedHotspots = new Set()) {
-    return this.hotspots.filter(hs => this._checkCondition(hs, inventory, usedHotspots));
+  // Sichtbare Objects (condition erfüllt)
+  visibleObjects(inventory, usedHotspots) {
+    return this.objects.filter(o =>
+      this._checkCondition(o.condition, inventory, usedHotspots)
+    );
+  }
+
+  // Klickbare Objects (condition UND clickable erfüllt)
+  activeObjects(inventory, usedHotspots) {
+    return this.visibleObjects(inventory, usedHotspots).filter(o => {
+      // Kein clickable-Feld → immer klickbar wenn sichtbar
+      if (!o.clickable) return true;
+      // clickable kann auch false sein → nie klickbar
+      if (o.clickable === false) return false;
+      // clickable ist eine Condition
+      return this._checkCondition(o.clickable, inventory, usedHotspots);
+    });
   }
 
   // -------------------------------------------------------------------------
-  // Klick / Hover
+  // Klick + useWith
   // -------------------------------------------------------------------------
-  handleClick(x, y, actionMode, inventory, usedHotspots) {
-    for (const hs of this.activeHotspots(inventory, usedHotspots)) {
-      if (this._hit(x, y, hs)) return { hotspot: hs, action: actionMode };
+  // activeItem: das gerade selektierte Item im Inventar (oder null)
+  handleClick(x, y, actionMode, inventory, usedHotspots, activeItem = null) {
+    for (const obj of this.activeObjects(inventory, usedHotspots)) {
+      if (!this._hit(x, y, obj)) continue;
+
+      // useWith — aktives Item auf dieses Object anwenden
+      if (activeItem && obj.actions?.useWith?.[activeItem.id] !== undefined) {
+        return { object: obj, action: 'useWith', itemId: activeItem.id };
+      }
+
+      // Normaler Aktionsmodus
+      return { object: obj, action: actionMode };
     }
     return null;
   }
 
-  isOverHotspot(x, y, inventory, usedHotspots) {
-    return this.activeHotspots(inventory, usedHotspots).some(hs => this._hit(x, y, hs));
+  isOverObject(x, y, inventory, usedHotspots) {
+    return this.activeObjects(inventory, usedHotspots).some(o => this._hit(x, y, o));
   }
 
   getLabelAt(x, y, inventory, usedHotspots) {
-    for (const hs of this.activeHotspots(inventory, usedHotspots)) {
-      if (this._hit(x, y, hs)) return hs.label || null;
+    for (const o of this.activeObjects(inventory, usedHotspots)) {
+      if (this._hit(x, y, o)) return o.label || null;
     }
     return null;
   }
 
-  _hit(x, y, hs) {
-    return x >= hs.x && x <= hs.x + hs.w &&
-           y >= hs.y && y <= hs.y + hs.h;
+  _hit(x, y, obj) {
+    return x >= obj.x && x <= obj.x + obj.w &&
+           y >= obj.y && y <= obj.y + obj.h;
   }
 
-  // -------------------------------------------------------------------------
-  // Update – Frame-Wechsel
-  // fps aus der JSON bestimmt wie schnell gewechselt wird (Standard: 2 fps)
-  // Alle Hotspots ticken synchron – sieht ruhiger aus als wenn jeder
-  // seinen eigenen Timer hätte.
-  // -------------------------------------------------------------------------
-  update(deltaTime) {
-    if (!this.hintsOn) return;
-
-    // Langsamster fps-Wert aller aktiven Hotspots bestimmt den Takt
-    // (oder Standard 2 fps wenn keiner definiert ist)
-    const fps = this.hotspots.reduce((min, hs) => {
-      return hs.glow?.fps ? Math.min(min, hs.glow.fps) : min;
-    }, 2);
-
-    this.glowTimer += deltaTime;
-    const interval = 1000 / fps;
-
-    if (this.glowTimer >= interval) {
-      this.glowTimer -= interval;
-      this.glowFrame  = 1 - this.glowFrame; // zwischen 0 und 1 wechseln
+  // Aktion-Text auflösen — unterstützt states für kontextabhängige Texte
+  // actionData kann sein: string, object mit goToScene/npc/puzzle/easterEgg,
+  // oder { default, states: { "itemInInventory:id": "...", ... } }
+  resolveAction(actionData, inventory, usedHotspots) {
+    if (!actionData || typeof actionData !== 'object') return actionData;
+    if (actionData.default !== undefined) {
+      // States prüfen — erste passende gewinnt
+      for (const [key, text] of Object.entries(actionData.states || {})) {
+        if (this._checkStateKey(key, inventory, usedHotspots)) return text;
+      }
+      return actionData.default;
     }
+    return actionData;
+  }
+
+  _checkStateKey(key, inventory, usedHotspots) {
+    // Format: "itemInInventory:id" | "itemNotInInventory:id" | "hotspotUsed:id"
+    const [type, value] = key.split(':');
+    if (type === 'itemInInventory')    return inventory.has(value);
+    if (type === 'itemNotInInventory') return !inventory.has(value);
+    if (type === 'hotspotUsed')        return usedHotspots.has(value);    
+    return false;
   }
 
   // -------------------------------------------------------------------------
-  // Glow zeichnen
-  // Jeder Hotspot mit glow.frames bekommt seinen Frame gezeichnet.
-  // Kein Fallback mehr – ohne Bild kein Glow.
+  // Label zeichnen
   // -------------------------------------------------------------------------
-  drawGlow(ctx, inventory) {
-    if (!this.hintsOn) return;
-
-    for (const hs of this.activeHotspots(inventory)) {
-      if (!hs.glow?.frames) continue;
-
-      const src = hs.glow.frames[this.glowFrame];
-      const img = this.images[src];
-
-      // Bild noch nicht geladen → überspringen (kein Flackern)
-      if (!img || !img.complete || img.naturalWidth === 0) continue;
-
-      ctx.drawImage(img, hs.x, hs.y, hs.w, hs.h);
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Label (Tooltip) zeichnen
-  // -------------------------------------------------------------------------
-  drawLabel(ctx, x, y, inventory) {
-    const label = this.getLabelAt(x, y, inventory);
+  drawLabel(ctx, mx, my, inventory, usedHotspots) {
+    const label = this.getLabelAt(mx, my, inventory, usedHotspots);
     if (!label) return;
 
     ctx.save();
     ctx.font      = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
-
     const w  = ctx.measureText(label).width + 20;
-    const lx = Math.min(Math.max(x, w / 2 + 8), CANVAS_WIDTH - w / 2 - 8);
-    const ly = Math.max(y - 18, 24);
+    const lx = Math.min(Math.max(mx, w / 2 + 8), CANVAS_WIDTH - w / 2 - 8);
+    const ly = Math.max(my - 18, 24);
 
     ctx.fillStyle = 'rgba(0,0,0,0.65)';
     ctx.beginPath();
     ctx.roundRect(lx - w / 2, ly - 16, w, 22, 6);
     ctx.fill();
-
     ctx.fillStyle = '#fff';
     ctx.fillText(label, lx, ly);
     ctx.restore();
