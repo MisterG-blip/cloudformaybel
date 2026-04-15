@@ -6,7 +6,7 @@
 const ACTIONS = [
   { id: 'look', icon: '👁',  label: 'Ansehen' },
   { id: 'take', icon: '✋',  label: 'Nehmen'  },
-  { id: 'use',  icon: '⚙️',  label: 'Benutzen'}
+  { id: 'use',  icon: '⚙️',  label: 'Interagieren'}
 ];
 
 const BAR_BTN_SIZE = 54;

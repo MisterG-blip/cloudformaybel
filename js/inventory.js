@@ -4,17 +4,18 @@
 // Item-in-Item (contains), Kombinationsregeln.
 // ============================================================================
 
-const INVENTORY_MAX = 5;
+const INVENTORY_MAX = 7;
 const SLOT_SIZE     = 54;
 const SLOT_GAP      = 10;
 const SLOT_START_X  = (CANVAS_WIDTH - (INVENTORY_MAX * (SLOT_SIZE + SLOT_GAP) - SLOT_GAP)) / 2;
 const SLOT_Y        = CANVAS_HEIGHT - 68;
 
 class Inventory {
-  constructor() {
+  constructor(itemDefs) {
     this.items       = [];     // [{ id, label, emoji, src, contains, canContain, combinesWith, ... }]
     this.activeIndex = null;   // Index des aktuell selektierten Items (null = keins)
     this.images      = {};     // gecachte Image-Objekte { src: HTMLImageElement }
+    this.itemDefs = itemDefs;  // Damit die Items insertInto können. Wird übergeben aus der game.js
   }
 
   // -------------------------------------------------------------------------
@@ -105,15 +106,37 @@ class Inventory {
   }
 
   // -------------------------------------------------------------------------
-  // Item in Item stecken
+  // Item in Item stecken, aber nicht mehr in Container. Vielleicht noch in NPCs oder Hotzones
   // -------------------------------------------------------------------------
   insertInto(containerId, itemId) {
+    console.log("ITEMDEFS KEYS:", Object.keys(this.itemDefs));
+    console.log("LOOKUP:", containerId);
+
     const container = this.get(containerId);
-    if (!container?.canContain) return false;
-    if (container.contains) return false;  // schon was drin
-    container.contains = itemId;
-    this.remove(itemId);
-    return true;
+    const def = this.itemDefs?.[containerId];
+
+    console.log("TRY INSERT:", { containerId, itemId });
+    console.log("DEF:", def);
+
+    if (!container || !def?.slots) {
+      console.log("❌ Kein Container oder keine Slots");
+      return false;
+    }
+    
+
+    for (const slot of def.slots) {
+      console.log("CHECK SLOT:", slot);
+
+      if (slot.item === null && slot.expectedItem === itemId) {
+        console.log("✅ MATCH FOUND:", slot);
+
+        slot.item = itemId;
+        this.remove(itemId);
+        return true;
+      }
+    }
+    console.log("❌ Kein Slot passt");
+    return false;
   }
 
   // Item aus Item nehmen (beide bleiben erhalten)

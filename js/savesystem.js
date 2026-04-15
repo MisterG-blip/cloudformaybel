@@ -10,13 +10,14 @@ class SaveSystem {
   save(game) {
     try {
       const data = {
-        scene:        game.sceneRenderer.sceneData?.id || 'street_act1',
-        playerX:      game.character.x,
-        playerY:      game.character.y,
-        inventory:    game.inventory.items.map(i => i.id),
-        usedHotspots: this._serializeMap(game.usedHotspots),
-        logbook:      game.logbook.toJSON(),
-        timestamp:    Date.now()
+        scene:         game.sceneRenderer.sceneData?.id || 'street_act1',
+        playerX:       game.character.x,
+        playerY:       game.character.y,
+        inventory:     game.inventory.items.map(i => i.id),
+        usedHotspots:  this._serializeMap(game.usedHotspots),
+        consumedItems: [...game.consumedItems],
+        logbook:       game.logbook.toJSON(),
+        timestamp:     Date.now()
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
       return true;
@@ -78,6 +79,9 @@ class SaveSystem {
 
     // Benutzte Hotspots wiederherstellen
     game.usedHotspots = this._deserializeMap(data.usedHotspots);
+
+    // Verbrauchte Items wiederherstellen
+    game.consumedItems = new Set(data.consumedItems || []);
 
     // Logbuch wiederherstellen
     game.logbook.fromJSON(data.logbook);

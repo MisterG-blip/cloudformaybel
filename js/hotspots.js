@@ -16,9 +16,9 @@ class HotspotSystem {
   // -------------------------------------------------------------------------
   // Condition prüfen
   // -------------------------------------------------------------------------
-  _checkCondition(c, inventory, usedHotspots) {
+  _checkCondition(c, inventory, usedHotspots, consumedItems) {
     if (!c) return true;
-    if (c.allConditions) return c.allConditions.every(sub => this._checkCondition(sub, inventory, usedHotspots));
+    if (c.allConditions) return c.allConditions.every(sub => this._checkCondition(sub, inventory, usedHotspots, consumedItems));
     if (c.itemNotInInventory)  return !inventory.has(c.itemNotInInventory);
     if (c.itemInInventory)     return inventory.has(c.itemInInventory);
     if (c.allItemsInInventory) return c.allItemsInInventory.every(id => inventory.has(id));
@@ -31,27 +31,28 @@ class HotspotSystem {
       const actions = usedHotspots?.get(c.hotspotNotUsed.id);
       return actions ? !actions.has(c.hotspotNotUsed.action) : true;
     }
-    // Easter Egg verschwindet nach Trigger
-    if (c.eggNotSeen) return !usedHotspots.has(`__egg_seen_${c.eggNotSeen}`);
+    // Items verswinden nach einsammeln, sie gelten dann als Consumed
+    if (c.itemNotConsumed) return !consumedItems.has(c.itemNotConsumed);
+    if (c.itemConsumed) return consumedItems?.has(c.itemConsumed);
     return true;
   }
 
   // Sichtbare Objects (condition erfüllt)
-  visibleObjects(inventory, usedHotspots) {
+  visibleObjects(inventory, usedHotspots, consumedItems) {
     return this.objects.filter(o =>
-      this._checkCondition(o.condition, inventory, usedHotspots)
+      this._checkCondition(o.condition, inventory, usedHotspots, consumedItems)
     );
   }
 
   // Klickbare Objects (condition UND clickable erfüllt)
-  activeObjects(inventory, usedHotspots) {
-    return this.visibleObjects(inventory, usedHotspots).filter(o => {
+  activeObjects(inventory, usedHotspots, consumedItems) {
+    return this.visibleObjects(inventory, usedHotspots,  consumedItems).filter(o => {
       // Kein clickable-Feld → immer klickbar wenn sichtbar
       if (!o.clickable) return true;
       // clickable kann auch false sein → nie klickbar
       if (o.clickable === false) return false;
       // clickable ist eine Condition
-      return this._checkCondition(o.clickable, inventory, usedHotspots);
+      return this._checkCondition(o.clickable, inventory, usedHotspots, consumedItems);
     });
   }
 
@@ -59,8 +60,8 @@ class HotspotSystem {
   // Klick + useWith
   // -------------------------------------------------------------------------
   // activeItem: das gerade selektierte Item im Inventar (oder null)
-  handleClick(x, y, actionMode, inventory, usedHotspots, activeItem = null) {
-    for (const obj of this.activeObjects(inventory, usedHotspots)) {
+  handleClick(x, y, actionMode, inventory, usedHotspots, consumedItems, activeItem = null) {
+    for (const obj of this.activeObjects(inventory, usedHotspots, consumedItems)) {
       if (!this._hit(x, y, obj)) continue;
 
       // useWith — aktives Item auf dieses Object anwenden
@@ -74,27 +75,39 @@ class HotspotSystem {
     return null;
   }
 
-  isOverObject(x, y, inventory, usedHotspots) {
-    return this.activeObjects(inventory, usedHotspots).some(o => this._hit(x, y, o));
+  isOverObject(x, y, inventory, usedHotspots, consumedItems) {
+    return this.activeObjects(inventory, usedHotspots, consumedItems).some(o => this._hit(x, y, o));
   }
 
-  getLabelAt(x, y, inventory, usedHotspots) {
-    for (const o of this.activeObjects(inventory, usedHotspots)) {
+  getLabelAt(x, y, inventory, usedHotspots, consumedItems) {
+    for (const o of this.activeObjects(inventory, usedHotspots, consumedItems,)) {
       if (this._hit(x, y, o)) return o.label || null;
     }
     return null;
   }
 
   _hit(x, y, obj) {
-    return x >= obj.x && x <= obj.x + obj.w &&
-           y >= obj.y && y <= obj.y + obj.h;
+    // NPC: Hitbox aus obj.hotspot.w/h + anchor-basierter Position
+    if (obj.type === 'npc') {
+      const hs = obj.hotspot || {};
+      const hw = hs.w ?? 80;
+      const hh = hs.h ?? 160;
+      // anchor bottom: x/y ist Fußpunkt → Hitbox wächst nach oben
+      const hx = (obj.x || 0) - hw / 2;
+      const hy = (obj.y || 0) - hh;
+      return x >= hx && x <= hx + hw && y >= hy && y <= hy + hh;
+    }
+    // Normales Object
+    const w = obj.w ?? 100;
+    const h = obj.h ?? 100;
+    return x >= obj.x && x <= obj.x + w && y >= obj.y && y <= obj.y + h;
   }
 
   // Aktion-Text auflösen — unterstützt states für kontextabhängige Texte
   // actionData kann sein: string, object mit goToScene/npc/puzzle/easterEgg,
   // oder { default, states: { "itemInInventory:id": "...", ... } }
   resolveAction(actionData, inventory, usedHotspots) {
-    if (!actionData || typeof actionData !== 'object') return actionData;
+    if (actionData == null || typeof actionData !== 'object') return actionData;
     if (actionData.default !== undefined) {
       // States prüfen — erste passende gewinnt
       for (const [key, text] of Object.entries(actionData.states || {})) {
@@ -117,8 +130,8 @@ class HotspotSystem {
   // -------------------------------------------------------------------------
   // Label zeichnen
   // -------------------------------------------------------------------------
-  drawLabel(ctx, mx, my, inventory, usedHotspots) {
-    const label = this.getLabelAt(mx, my, inventory, usedHotspots);
+  drawLabel(ctx, mx, my, inventory, usedHotspots, consumedItems,) {
+    const label = this.getLabelAt(mx, my, inventory, usedHotspots, consumedItems,);
     if (!label) return;
 
     ctx.save();
