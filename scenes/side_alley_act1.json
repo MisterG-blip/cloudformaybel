@@ -35,15 +35,33 @@
           "y": 65,
           "w": 52,
           "h": 400,
-          "label": "Laterne",
+          "label": "Tür",
           "glow":null,          
           "condition": null,
           "actions": {
-            "look": "Eine alte Gaslaterne. Warmes Licht flackert durch das Glas. Ein warmer Windhauch streicht hindurch.",
-            "take": "windessenz",
-            "use": "Die Laterne leuchtet schon. Anders kann man die nicht benutzen.."
+            "look": "Hier geht es in die Wohnung des Wissenschaftlers.",
+            "take": null,
+            "use": { 
+              "goToScene": "entryway_act1",
+              "arriveAt": { "x": 106, "y": 520 }
+            }
           }
         },
+        {
+          "id": "scientist_obj",
+          "src": "assets/objects/scientist.png",
+          "x": 200,
+          "y": 280,
+          "w": 80,
+          "h": 130,
+          "label": "Wissenschaftler",
+          "walkTo": {"x" : "554", "y" : "431"},
+          "actions": {
+            "look": "Ein Mann mit Kittel Was der wohl macht?",
+            "take": null,
+            "use":  { "npc": "scientist" }
+        }
+      } ,
         {
           "id": "muelleimer",
           "x": 265,
@@ -52,15 +70,15 @@
           "h": 60,
           "label": "Mülleimer",
           "glow": null,
-          "condition": null,
+          "condition": { "itemNotConsumed": "aetherkolben"
+          },
           "actions": {
-            "look": "Mülltonnen. Riecht nicht besonders einladend.",
+            "look": "Mülltonnen. Riecht nicht besonders einladend.\nIrgendwas schimmert da drin. Ich komme aber nicht an.",
             "take": "Wie soll ich das machen?",
             "use": "Ich habe gerde nichts. Aber Müll gehört in die Tonne!",
             "useWith": {
               "phlogiston_zange": {
-                "text": "Du angelst etwas aus dem Müll...",
-                "giveItem": "aetherkolben" 
+                "giveItem": "aetherkolben"
               }
             }
           }
@@ -74,11 +92,11 @@
           "h": 100,
           "label": "Vakuumpumpe",
           "glow": null,
-          "condition": {"itemNotInInventory": "vakuumpumpe"},
+          "condition": {"itemNotConsumed": "vakuumpumpe"},
           "actions": {
             "look": "Eine Pumpe! Die kann bestimmt Sachen einsaugen!",
             "take": "vakuumpumpe",
-            "use": "So ist das leider kaputt. Ich muss das reparieren."
+            "use": "Da fehlen ein paar Teile. Das kann ich erledigen!"
           }
         },
         {

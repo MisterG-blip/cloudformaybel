@@ -47,7 +47,7 @@
         "condition": null,
         "actions": {
           "look": "So viele Wolken! Eine davon sieht besonders schön aus. Wie schön wäre es, sie zu besitzen...",
-          "take": null,
+          "take": "Viel zu weit weg! Vielleicht kann man sie einsaugen?",
           "use":  "Ich kann sie so nicht erreichen. Ich brauche etwas dafür."
         }
       },
@@ -58,8 +58,8 @@
         "glow": null,
         "condition": null,
         "actions": {
-          "look": "Man soll nicht in die Wolken gucken.",
-          "take": null,
+          "look": "Man soll nicht in die Sonne gucken.",
+          "take": "Viel zu weit weg! Vielleicht kann man sie mit einer Zange packen.",
           "use":  "Mit einem Solarpanal vielleicht. Aber hier ist keines. Vielleicht geht es auch anders."
         }
       },

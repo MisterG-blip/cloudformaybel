@@ -35,8 +35,7 @@
           "h": 300,
           "label": "Tür (raus)",
           "glow": null,
-          "condition": null,
-          "walkTo": { "x": 490, "y": 520 },
+          "condition": null,          
           "actions": {
             "look": "Die Tür nach draußen. Die Straße wartet.",
             "take": "Eine Tür passt nicht in die Tasche. Aber vielleicht der Knauf?",
@@ -54,11 +53,13 @@
           "label": "Schreibtisch",
           "glow": null,
           "condition": null,
-          "walkTo": { "x": 160, "y": 440 },
+          "walkTo": { "x": 210, "y": 500 },
           "actions": {
-            "look": "Mein Schreibtisch. Hier habe ich schon für so einige Mathearbeiten gelernt. Da sind noch Schubladen!",
+            "look": {
+              "default": "Mein Schreibtisch. Ich müsste ja eigentlich noch lernen. Da sind noch Schubladen!",
+              "states": {"itemInInventory:schatulle": "Mein Schreibtisch. Ich lerne später.\nIch habe wichtigeres zu tun."}},
             "take": "Meine Tasche ist nicht groß genug.",
-            "use": "Hier ist noch Platz für etwas Großes..."
+            "use": "Ich habe jetzt keine Lust zu lernen."
           }
         },
         {
@@ -73,11 +74,13 @@
           "condition": {
             "hotspotUsedWith": { "id": "schreibtisch", "action": "look" }
           },
-          "walkTo": { "x": 160, "y": 440 },
+          "walkTo": { "x": 210, "y": 500 },
           "actions": {
-            "look": "Eine halb geöffnete Schublade. Da liegt eine alte Holzschatulle drin!",
+            "look": {
+              "default": "Eine halb geöffnete Schublade. Da liegt eine alte Holzschatulle drin!",
+              "states": {"itemInInventory:schatulle": "Die Schubladen sind leer."}},
             "take": "schatulle",
-            "use": "Ich wühle kurz durch den Kram..."
+            "use": "Ich wühle kurz durch den Kram...\nNicht weiter drin."
           }
         },        
         {
@@ -94,7 +97,7 @@
           "walkTo": { "x": 430, "y": 511 },
           "actions": {
             "look": "Mein Bett. Der Teddy schaut mich vorwurfsvoll an.",
-            "take": "Vielleicht nur das Kissen?",
+            "take": "Das Ganze Bett mitnehmen? - Vielleicht nur das Kissen?",
             "use": "Keine Zeit zum Schlafen. Ich will eine Wolke fangen!"
           }
         },
@@ -129,8 +132,8 @@
           "glow": null,
           "condition": null,
           "walkTo": {
-            "x": 350,
-            "y": 520
+            "x": 250,
+            "y": 470
           },
           "actions": {
             "look": "Ein altes Radio. Es spielt leise Musik.",

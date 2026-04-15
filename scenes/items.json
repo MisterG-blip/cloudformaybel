@@ -41,7 +41,7 @@
 
   "barometer_sehnsucht": {
     "emoji": "🧭", "label": "Barometer der Sehnsucht",
-    "description": "Ein typisches Manometer. Der Zeiger steht auf 'Maximum'.",
+    "description": "Es zeigt an, was man sich am meisten wünscht.",
     "src": "assets/items/barometer.png",
     "machinemPart": true,
     "act": 1
@@ -58,7 +58,11 @@
     "description": "Saugt Wolken an. Surrt laut.",
     "src": "assets/items/vakuumpumpe.png",
     "machinePart": true,
-    "canContain" : "true",
+    "slots": [
+      { "id": "pressure",   "expectedItem": "barometer_sehnsucht", "item": null },
+      { "id": "tool", "expectedItem": "wolkenharpune", "item": null },
+      { "id": "container", "expectedItem": "aetherkolben", "item": null }
+    ],
     "act": 1
   },
   "aetherkolben": {
@@ -80,21 +84,21 @@
     "emoji": "🥚", "label": "Kosmisches Ei",
     "description": "Warm. Pulsiert leise. Vielleicht gehört das woanders hin.",
     "src": "assets/items/kosmisches_ei.png",
-    "easterEgg": true,
+    "easterEgg": { "effect": "galaxy", "src": null },
     "act": 1
   },
   "homunkulus_phiole": {
     "emoji": "🧪", "label": "Homunkulus Phiole",
     "description": "Kein echtes Leben… nur eine Idee davon.",
     "src": "assets/items/homunkulus_phiole.png",
-    "easterEgg": true,
+    "easterEgg": { "effect": "homunkulus", "src": null },
     "act": 1
   },
   "sulphorium_kristall": {
     "emoji": "💎", "label": "Sulphorium-Kristall",
     "description": "Die Seele der Materie. Oder doch ihre eigene?",
     "src": "assets/items/sulphorium_kristall.png",
-    "easterEgg": true,
+    "easterEgg": { "effect": "sulphorium", "src": null },
     "act": 1
   },
 

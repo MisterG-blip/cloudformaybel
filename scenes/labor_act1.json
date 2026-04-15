@@ -1,24 +1,30 @@
 {
-  "id": "park_act1",
+  "id": "labor_act1",
   "screens": [{
     "id": "screen_1",
     "layers": [
-      { "src": "assets/scenes/cave/act1/bg.png", "placeholder": "#7ab648" }
+      { "src": "assets/scenes/labor/act1/bg.png", "placeholder": "#7ab648" }
     ],
     "walkarea": {
         "points": [
-          { "x": 250, "y": 600 },
-          { "x": 550, "y": 600 }, 
+          { "x": 90,  "y": 600 },
+          { "x": 225, "y": 600 },
+          { "x": 295, "y": 485 },
 
-          { "x": 650, "y": 400 }, 
-          { "x": 150, "y": 400 }                
+          { "x": 509, "y": 485 },
+          { "x": 550, "y": 600 },
+          { "x": 800, "y": 600 },  
+
+          { "x": 592, "y": 437 }, 
+          { "x": 140, "y": 437 },
+          { "x": 150, "y": 513 } 
         ]
       },
       "depthscale": {
         "yNear": 580,
         "yFar": 395,
         "scaleNear": 1.5,
-        "scaleFar":  1.5
+        "scaleFar":  0.9
       },
       "characterScale": 2.0,
       "playerStart": {
@@ -28,55 +34,23 @@
     "objects": [
       {
         "id": "ausgang",
-        "x": 340,
-        "y": 10,
-        "w": 100,
-        "h": 60,
-        "label": "Ausgang zum Park",
+        "x": 80,
+        "y": 140,
+        "w": 60,
+        "h": 270,
+        "label": "Ausgang",
         "glow": null,
         "condition": null,
         "actions": {
-          "look": "Das ist ein Erdloch.",
+          "look": "Hier geht es zurück",
           "take": null,
           "use": {
-              "goToScene": "park_act1",
-              "arriveAt": { "x": 306, "y": 531 }
+              "goToScene": "entryway_act1",
+              "arriveAt": { "x": 386, "y": 390 }
             }
         }
-      },
-      {
-        "id": "amina_obj",
-        "type": "npc",
-
-        "x": 250,
-        "y": 440,
-
-        "visual": {
-          "src": "assets/npc/amina_sprite.png",
-          "scale": 1.3,
-          "frameW": 256,
-          "frameH": 256,
-          "states": {
-            "idle": {
-              "frames": 4,
-              "row": 0,
-              "fps": 2
-            }
-          },
-          "anchor": "bottom",
+      }
           
-          "pivotX": 0.5,
-          "pivotY": 1.0,
-
-          "offsetX": 0,
-          "offsetY": 20
-        },
-        "hotspot": {
-            "w":  70,
-            "h": 270
-          },
-        "label": "Amina"
-      }   
     ],
   "npcs": {
     "amina": {

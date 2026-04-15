@@ -6,29 +6,29 @@
       { "src": "assets/scenes/park/act1/bg.png", "placeholder": "#7ab648" }
     ],
     "walkarea": {
-        "points": [
-          { "x": 200, "y": 520 },
-          { "x": 500, "y": 600 },
-          { "x": 800, "y": 600 },          
-          { "x": 800, "y": 400 },
-          { "x": 650, "y": 370 },
-          { "x": 800, "y": 340 },
-          { "x": 550, "y": 360 },
-          { "x": 480, "y": 400 },          
-          { "x": 450, "y": 520 }                 
-        ]
-      },
-      "depthscale": {
-        "yNear": 580,
-        "yFar": 395,
-        "scaleNear": 1.5,
-        "scaleFar": 0.5
-      },
-      "characterScale": 2.0,
-      "playerStart": {
-        "x": 400,
-        "y": 520
-      },
+      "points": [
+        { "x": 200, "y": 520 },
+        { "x": 500, "y": 600 },
+        { "x": 800, "y": 600 },          
+        { "x": 800, "y": 400 },
+        { "x": 650, "y": 370 },
+        { "x": 800, "y": 340 },
+        { "x": 550, "y": 360 },
+        { "x": 480, "y": 400 },          
+        { "x": 450, "y": 520 }                 
+      ]
+    },
+    "depthscale": {
+      "yNear": 580,
+      "yFar": 395,
+      "scaleNear": 1.5,
+      "scaleFar": 0.4
+    },
+    "characterScale": 2.0,
+    "playerStart": {
+      "x": 400,
+      "y": 520
+    },
     "objects": [
       {
         "id": "ausgang",
@@ -43,12 +43,9 @@
           "look": "Das Tor zurück zur Straße.",
           "take": null,
           "use": {
-              "goToScene": "street_act1",
-              "arriveAt": {
-                "x":  30,
-                "y": 550
-              }
-            }
+            "goToScene": "street_act1",
+            "arriveAt": { "x":  30, "y": 550 }
+          }
         }
       },
       {
@@ -61,9 +58,12 @@
         "glow": null,
         "condition": null,
         "actions": {
-          "look": "Ein kleiner Teich. Das Wasser glitzert. Irgendwas schimmert am Grund.",
+          "look": {
+              "default": "Ein kleiner Teich. Das Wasser glitzert.\nIrgendwas schimmert am Grund.",
+              "states": {"itemInInventory:phlogiston_zange": "Ein kleiner Teich. Nur noch die Sonnenstrahlen, die sich auf dem Wasser spiegeln."}
+            },
           "take": "phlogiston_zange",
-          "use":  "Das Wasser ist zu tief."
+          "use":  "Das Wasser ist zu nass.\nVielleicht, wenn es trockenes Wasser geben würde."
         }
       },
       {
@@ -79,8 +79,8 @@
           "look": "Eine weitere, Holzbank.",
           "take": null,
           "use": "Ich setze mich kurz... nein, keine Zeit. Außerdem ist sie auch nass."
-          }
-        },
+        }
+      },
       {
         "id": "baumkrone",
         "x": 200,
@@ -91,15 +91,17 @@
         "glow": null,
         "condition": { "itemInInventory" : "phlogiston_zange"},
         "actions": {
-          "look": "Irgendwas ist doch da oben in den Ästen",
+          "look": {
+            "default":"Irgendwas ist doch da oben in den Ästen",
+            "states: [itemInInventory:sulphorium_kristall":"Nur noch Vögel in der Krone."},
           "take": null,
           "use":  "Ich komme da oben nicht mal an. Wie soll ich das dann >>benutzen<<? \n Nicht mal, wenn ich auf die Bank klettere. -.-",
           "useWith": {
-              "phlogiston_zange": {
-                "text": "Du ziehst etwas aus der Baumkrone...",
-                "giveItem": "sulphorium_kristall" 
-              }
+            "phlogiston_zange": {
+              "text": "Du ziehst etwas aus der Baumkrone...",
+              "giveItem": "sulphorium_kristall" 
             }
+          }
         }
       },
       {
@@ -114,7 +116,7 @@
         "actions": {
           "look": "Ein riesiger Kastanienbaum. Die Äste reichen fast bis zu den Wolken. Fast. So lange Arme habe ich trotzdem nicht.",
           "take": null,
-          "use":  "Der Baum ist zu glatt zum Klettern."
+          "use":  "Der Stamm ist zu hoch zum Klettern."
         }
       },
       {
@@ -131,8 +133,8 @@
           "take": null,
           "use": { "goToScene": "cave_act1" }            
         }
-      }
-    ]
+      }      
+    ]  
   }],
   "items": {}
 }
