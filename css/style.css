@@ -5,15 +5,21 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport für Mobile */
   overflow: hidden;
   font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  touch-action: none; /* verhindert Browser-Scroll bei Touch */
 }
 
 #gameContainer {
   position: relative;
-  width:  800px;
-  height: 600px;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 #gameCanvas {
