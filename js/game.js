@@ -570,12 +570,12 @@ class Game {
     }
   }
 
-  draw() {
+  draw(deltaTime = 0) {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Szene (Layer + Objects) mit Condition-Prüfung
-    this.sceneRenderer.draw(this.inventory, this.usedHotspots, this.consumedItems);
+    this.sceneRenderer.draw(this.inventory, this.usedHotspots, this.consumedItems, deltaTime);
 
     // Easter-Egg-Effekt
     if (this.easterEffect) this._drawEasterEffect(ctx);
@@ -906,7 +906,7 @@ class Game {
     const delta = Math.min(timestamp - this._lastTime, 100);
     this._lastTime = timestamp;
     this.update(delta);
-    this.draw();
+    this.draw(delta);
     requestAnimationFrame(t => this.gameLoop(t));
   }
 

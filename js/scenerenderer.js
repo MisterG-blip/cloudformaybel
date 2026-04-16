@@ -91,12 +91,12 @@ class SceneRenderer {
   // -------------------------------------------------------------------------
   // Zeichnen
   // -------------------------------------------------------------------------
-  draw(inventory, usedHotspots, consumedItems) {
+  draw(inventory, usedHotspots, consumedItems, deltaTime = 0) {
     if (!this.sceneData) return;
     if (this.transition) {
-      this._drawSlide(inventory, usedHotspots, consumedItems);
+      this._drawSlide(inventory, usedHotspots, consumedItems, deltaTime);
     } else {
-      this._drawScreen(this.sceneData.screens[this.currentIndex], 0, inventory, usedHotspots, consumedItems);
+      this._drawScreen(this.sceneData.screens[this.currentIndex], 0, inventory, usedHotspots, consumedItems, deltaTime);
     }
   }
 
@@ -192,7 +192,8 @@ class SceneRenderer {
     const frameCount = config?.frames ?? 1;
     const row = config?.row ?? 0;
 
-    const frameIndex = (obj._animFrame ?? 0) % frameCount;
+    const startFrame = config?.startFrame ?? 0;
+    const frameIndex = startFrame + ((obj._animFrame ?? 0) % frameCount);
 
     const frameX = frameIndex * frameW;
     const frameY = row * frameH;
@@ -235,6 +236,9 @@ class SceneRenderer {
   }
 
   _updateNpcAnimation(obj, visual, deltaTime) {
+    // --- Behavior-Tick (zufaellige Zustandswechsel) ---
+    this._tickNpcBehavior(obj, visual, deltaTime);
+
     const state = visual.state || 'idle';
     const config = visual.states?.[state];
     if (!config) return;
@@ -245,19 +249,80 @@ class SceneRenderer {
     obj._animTimer = (obj._animTimer || 0) + deltaTime;
 
     if (obj._animTimer >= frameTime) {
-      obj._animTimer -= frameTime; // 🔥 wichtig: NICHT resetten
+      obj._animTimer -= frameTime;
       obj._animFrame = ((obj._animFrame || 0) + 1) % (config.frames ?? 1);
     }
   }
 
-  _drawSlide(inventory, usedHotspots, consumedItems) {
+  // -------------------------------------------------------------------------
+  // NPC Behavior
+  // Gesteuert ueber visual.behavior in der JSON:
+  //
+  //  "behavior": {
+  //    "idleState": "idle",
+  //    "tickMs": 1500,
+  //    "reactions": [
+  //      { "state": "idle",       "weight": 70 },
+  //      { "state": "blink",      "weight": 15, "durationMs": 200 },
+  //      { "state": "look_right", "weight": 15, "durationMs": 1000 }
+  //    ]
+  //  }
+  // -------------------------------------------------------------------------
+  _tickNpcBehavior(obj, visual, deltaTime) {
+    const beh = visual.behavior;
+    if (!beh) return;
+
+    if (obj._behaviorTimer === undefined) {
+      obj._behaviorTimer = 0;
+      obj._behaviorLocked = false;
+      visual.state = beh.idleState ?? 'idle';
+    }
+
+    if (obj._behaviorLocked) {
+      obj._behaviorLockTimer = (obj._behaviorLockTimer || 0) + deltaTime;
+      if (obj._behaviorLockTimer >= obj._behaviorLockDuration) {
+        obj._behaviorLocked    = false;
+        obj._behaviorLockTimer = 0;
+        obj._animFrame         = 0;
+        visual.state           = beh.idleState ?? 'idle';
+      }
+      return;
+    }
+
+    obj._behaviorTimer += deltaTime;
+    const tickMs = beh.tickMs ?? 1500;
+    if (obj._behaviorTimer < tickMs) return;
+    obj._behaviorTimer = 0;
+
+    const reactions = beh.reactions;
+    if (!reactions?.length) return;
+
+    const totalWeight = reactions.reduce((s, r) => s + (r.weight ?? 1), 0);
+    let rand = Math.random() * totalWeight;
+    let chosen = reactions[reactions.length - 1];
+    for (const r of reactions) {
+      rand -= (r.weight ?? 1);
+      if (rand <= 0) { chosen = r; break; }
+    }
+
+    visual.state   = chosen.state;
+    obj._animFrame = 0;
+
+    if (chosen.durationMs) {
+      obj._behaviorLocked       = true;
+      obj._behaviorLockTimer    = 0;
+      obj._behaviorLockDuration = chosen.durationMs;
+    }
+  }
+
+  _drawSlide(inventory, usedHotspots, consumedItems, deltaTime = 0) {
     const t   = this._easeInOut(this.transition.progress);
     const dir = this.transition.direction;
     const sign = dir === 'right' ? 1 : -1;
     this._drawScreen(this.sceneData.screens[this.transition.fromIndex],
-      -sign * t * CANVAS_WIDTH, inventory, usedHotspots, consumedItems);
+      -sign * t * CANVAS_WIDTH, inventory, usedHotspots, consumedItems, deltaTime);
     this._drawScreen(this.sceneData.screens[this.transition.toIndex],
-      sign * (1 - t) * CANVAS_WIDTH, inventory, usedHotspots, consumedItems);
+      sign * (1 - t) * CANVAS_WIDTH, inventory, usedHotspots, consumedItems, deltaTime);
   }
 
 
