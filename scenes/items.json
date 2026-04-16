@@ -90,7 +90,7 @@
   "homunkulus_phiole": {
     "emoji": "🧪", "label": "Homunkulus Phiole",
     "description": "Kein echtes Leben… nur eine Idee davon.",
-    "src": "assets/items/homunkulus_phiole.png",
+    "src": "assets/items/homunculus_phiole.png",
     "easterEgg": { "effect": "homunkulus", "src": null },
     "act": 1
   },

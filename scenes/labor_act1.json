@@ -49,8 +49,23 @@
               "arriveAt": { "x": 386, "y": 390 }
             }
         }
-      }
-          
+      },
+      {
+        "id": "homunkulus_phiole",
+        "src": "assets/items/homunculus_phiole.png",
+        "x": 380,
+        "y": 265,
+        "w": 75,
+        "h": 75,
+        "label": "Homunkulus",
+        "glow": null,
+        "condition": {"itemNotConsumed": "homunkulus_phiole"},
+        "actions": {
+          "look": "Was ist das... sieht eklig aus.",
+          "take": "homunkulus_phiole",
+          "use": ""
+        }
+      }   
     ],
   "npcs": {
     "amina": {
