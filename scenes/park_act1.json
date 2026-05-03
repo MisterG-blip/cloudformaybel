@@ -93,7 +93,8 @@
         "actions": {
           "look": {
             "default":"Irgendwas ist doch da oben in den Ästen",
-            "states: [itemInInventory:sulphorium_kristall":"Nur noch Vögel in der Krone."},
+            "states": {"itemInInventory:sulphorium_kristall":"Nur noch Vögel in der Krone."}
+          },
           "take": null,
           "use":  "Ich komme da oben nicht mal an. Wie soll ich das dann >>benutzen<<? \n Nicht mal, wenn ich auf die Bank klettere. -.-",
           "useWith": {

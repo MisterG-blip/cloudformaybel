@@ -70,9 +70,15 @@
         "glow": null,
         "condition": {"itemInInventory": "vakuumpumpe"},
         "actions": {
-          "look": "Man soll nicht in die Wolken gucken.",
+          "look": "Ein freier Platz auf dem Dach. Genau die richtige Größe für eine Maschine.",
           "take": null,
-          "use":  "Mit einem Solarpanal vielleicht. Aber hier ist keines. Vielleicht geht es auch anders."
+          "use":  "Ich sollte die Pumpe einfach hier abstellen.",
+          "useWith": {
+            "vakuumpumpe": {
+              "dialog": "✨ Die Vakuumpumpe steht! Sie surrt leise und zeigt auf die Wolken.",
+              "consume": true
+            }
+          }
         }
       }
     ]
