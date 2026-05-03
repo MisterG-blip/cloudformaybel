@@ -42,9 +42,11 @@ class CursorSystem {
     this.clickTimer = 150;  // ms
   }
 
-  update(deltaTime, isOverHotspot, actionMode) {
-    this.hover = isOverHotspot;
-    this.mode  = actionMode;
+  update(deltaTime, isOverHotspot, actionMode, isDragging = false, isOverDropTarget = false) {
+    this.hover          = isOverHotspot;
+    this.mode           = actionMode;
+    this.isDragging     = isDragging;
+    this.isOverDropTarget = isOverDropTarget;
     if (this.clicked) {
       this.clickTimer -= deltaTime;
       if (this.clickTimer <= 0) this.clicked = false;
@@ -60,9 +62,11 @@ class CursorSystem {
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    const color  = CURSOR_COLORS[this.mode] || '#fff';
-    const scale  = this.hover ? 1.2 : 1.0;
-    const closed = this.clicked;  // Faust beim Klicken
+    const color  = this.isOverDropTarget ? '#90ff90'
+                 : this.isDragging       ? '#ffe0a0'
+                 : (CURSOR_COLORS[this.mode] || '#fff');
+    const scale  = (this.hover || this.isOverDropTarget) ? 1.2 : 1.0;
+    const closed = this.clicked || this.isDragging;
 
     ctx.scale(scale, scale);
 

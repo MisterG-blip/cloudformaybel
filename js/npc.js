@@ -28,6 +28,25 @@ class NpcSystem {
     this._goToNode(entryId, inventory, itemDefs);
   }
 
+  // -------------------------------------------------------------------------
+  // Dialog starten wenn Spieler aktives Item auf NPC wirft (giveEntries)
+  // Gibt true zurück wenn giveEntries behandelt wurde, sonst false
+  // -------------------------------------------------------------------------
+  startWithItem(npcDef, itemId, inventory, itemDefs, onClose = null) {
+    const entries = npcDef.giveEntries;
+    if (!entries) return false;
+
+    // Spezifischen Eintrag suchen, dann Fallback '*'
+    const nodeId = entries[itemId] ?? entries['*'] ?? null;
+    if (!nodeId) return false;
+
+    this.active  = true;
+    this.npc     = npcDef;
+    this.onClose = onClose;
+    this._goToNode(nodeId, inventory, itemDefs);
+    return true;
+  }
+
   close() {
     this.active  = false;
     this.npc     = null;
@@ -63,10 +82,24 @@ class NpcSystem {
 
     this.node = { ...node, id: nodeId };
 
+    // Tausch auf Knoten-Ebene sofort ausführen (z.B. "tausch"-Knoten bei giveEntries)
+    if (node.trade) {
+      const { give, receive } = node.trade;
+      if (give && inventory.has(give)) inventory.remove(give);
+      if (receive) {
+        const itemDef = itemDefs[receive];
+        if (itemDef) inventory.add({ id: receive, ...itemDef });
+      }
+    }
+
     // Auswahloptionen filtern (Bedingungen prüfen)
     this.choices = (node.choices || []).filter(c =>
       !c.condition || this._checkCondition(c.condition, inventory)
     );
+
+    // Merken für handleClick
+    this._inventory = inventory;
+    this._itemDefs  = itemDefs;
   }
 
   // -------------------------------------------------------------------------
@@ -74,6 +107,10 @@ class NpcSystem {
   // -------------------------------------------------------------------------
   handleClick(x, y, inventory, itemDefs) {
     if (!this.active || !this.node) return false;
+
+    // Immer aktuell halten
+    this._inventory = inventory;
+    this._itemDefs  = itemDefs;
 
     // Auswahl geklickt?
     const layout = this._layout();

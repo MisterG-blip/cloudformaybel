@@ -126,7 +126,25 @@ class Game {
 
     this.drag.onDropInScene = (item, x, y) => {
       const hit = this.hotspots.handleClick(x, y, 'use', this.inventory, this.usedHotspots, this.consumedItems, item);
-      if (hit?.action === 'useWith') {
+      if (!hit) { this.dialog.show(`Hier kann ich ${item.label} nicht ablegen.`); return; }
+
+      // Item auf NPC gedroppt → giveEntries
+      if (hit.object.type === 'npc') {
+        const npcId  = hit.object.id.replace('_obj', '');
+        const npcDef = this.sceneRenderer.sceneData?.npcs?.[npcId];
+        if (npcDef) {
+          const tx = hit.object.x + (hit.object.hotspot?.w ?? 0) / 2;
+          const ty = hit.object.y + (hit.object.hotspot?.h ?? 0) / 2;
+          this.character.walkTo(tx, ty, () => {
+            const handled = this.npc.startWithItem(npcDef, item.id, this.inventory, this.itemDefs);
+            if (!handled) this.dialog.show(`${npcDef.name || 'NPC'} weiß damit nichts anzufangen.`);
+          });
+          return;
+        }
+      }
+
+      // useWith auf normalem Objekt
+      if (hit.action === 'useWith') {
         this._executeUseWith(hit.object, item);
       } else {
         this.dialog.show(`Hier kann ich ${item.label} nicht ablegen.`);
@@ -267,8 +285,11 @@ class Game {
     if (!this.usedHotspots.has(obj.id)) this.usedHotspots.set(obj.id, new Set());
     this.usedHotspots.get(obj.id).add(action);
 
-    const tx = obj.walkTo?.x ?? (obj.x + obj.w / 2);
-    const ty = obj.walkTo?.y ?? (obj.y + obj.h);
+    // NPCs haben kein w/h auf Object-Ebene → hotspot.w/h als Fallback, sonst 0
+    const objW = obj.w ?? obj.hotspot?.w ?? 0;
+    const objH = obj.h ?? obj.hotspot?.h ?? 0;
+    const tx = obj.walkTo?.x ?? (obj.x + objW / 2);
+    const ty = obj.walkTo?.y ?? (obj.y + objH / 2);
 
     // useWith — Item auf Object anwenden
     if (action === 'useWith' && itemId) {
@@ -302,6 +323,12 @@ class Game {
       const npcDef = sceneDef?.npcs?.[npcId];
       if (npcDef) {
         this.character.walkTo(tx, ty, () => {
+          // Aktives Item vorhanden → giveEntries zuerst probieren
+          const activeItem = this.inventory.activeItem;
+          if (activeItem) {
+            const handled = this.npc.startWithItem(npcDef, activeItem.id, this.inventory, this.itemDefs);
+            if (handled) { this.inventory.clearActive(); return; }
+          }
           this.npc.start(npcDef, this.inventory, this.itemDefs);
         });
       } else {
@@ -370,6 +397,23 @@ class Game {
     if (result === undefined || result === null) {
       this.dialog.show(`${item.label} passt hier nicht.`);
       return;
+    }
+
+    // Maschine mit Slots? → erst prüfen ob vollständig bestückt
+    if (result.consume || result.removeItem) {
+      const itemDef = this.itemDefs[item.id];
+      if (itemDef?.slots) {
+        const missing = itemDef.slots
+          .filter(slot => !slot.item)
+          .map(slot => {
+            const partDef = this.itemDefs[slot.expectedItem];
+            return partDef?.label || slot.expectedItem;
+          });
+        if (missing.length > 0) {
+          this.dialog.show(`Die ${item.label} ist noch nicht fertig.\nEs fehlt noch: ${missing.join(', ')}.`);
+          return;
+        }
+      }
     }
 
     // String → Dialog
@@ -556,7 +600,11 @@ class Game {
     const overObject = this.hotspots.isOverObject(
       this.cursor.x, this.cursor.y, this.inventory, this.usedHotspots, this.consumedItems
     );
-    this.cursor.update(deltaTime, overObject, this.actionBar.mode);
+    const isDragging = this.drag.isDragging;
+    const isOverDropTarget = isDragging && this.hotspots.isOverObject(
+      this.cursor.x, this.cursor.y, this.inventory, this.usedHotspots, this.consumedItems
+    );
+    this.cursor.update(deltaTime, overObject, this.actionBar.mode, isDragging, isOverDropTarget);
 
     if (this.tapEffect) {
       this.tapEffect.alpha -= deltaTime * 0.003;
