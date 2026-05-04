@@ -72,10 +72,58 @@ class Game {
       this._handleClick(x, y);
     });
 
+    // Mausbewegung → Linse bewegen
+    this.canvas.addEventListener('mousemove', (e) => {
+      const { x, y } = this._toCanvas(e.clientX, e.clientY);
+      this.cursor.x = x;
+      this.cursor.y = y;
+      if (this.puzzle.active && this.puzzle.type === 'cloud_shoot') {
+        this.puzzle._handleCloudShootInput(x, y, this._mouseHeld);
+      }
+    });
+
+    // Gedrückthalten
+    this.canvas.addEventListener('mousedown', (e) => {
+      const { x, y } = this._toCanvas(e.clientX, e.clientY);
+      this._mouseHeld = true;
+      if (this.puzzle.active && this.puzzle.type === 'cloud_shoot') {
+        this.puzzle._handleCloudShootInput(x, y, true);
+      }
+    });
+    this.canvas.addEventListener('mouseup', () => {
+      this._mouseHeld = false;
+      if (this.puzzle.active && this.puzzle.type === 'cloud_shoot') {
+        this.puzzle._handleCloudShootInput(this.cursor.x, this.cursor.y, false);
+      }
+    });
+
+    // Touch: wischen bewegt Linse, gedrückt halten saugt ein
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      const { x, y } = this._toCanvas(t.clientX, t.clientY);
+      if (this.puzzle.active && this.puzzle.type === 'cloud_shoot') {
+        this.puzzle._handleCloudShootInput(x, y, true);
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      const { x, y } = this._toCanvas(t.clientX, t.clientY);
+      if (this.puzzle.active && this.puzzle.type === 'cloud_shoot') {
+        this.puzzle._handleCloudShootInput(x, y, true);
+      }
+    }, { passive: false });
+
     this.canvas.addEventListener('touchend', (e) => {
       e.preventDefault();
       const t = e.changedTouches[0];
       const { x, y } = this._toCanvas(t.clientX, t.clientY);
+      if (this.puzzle.active && this.puzzle.type === 'cloud_shoot') {
+        this.puzzle._handleCloudShootInput(x, y, false);
+        return;
+      }
       this.tapEffect = { x, y, alpha: 1.0 };
       this._handleClick(x, y);
     }, { passive: false });
@@ -434,11 +482,18 @@ class Game {
       this.logbook.logItem({ label: item.label }, 'used');
     }
 
-    // consume: true → dauerhaft verbraucht (kann nicht mehr eingesammelt werden)
+    // consume: true → das gedropte Item dauerhaft verbraucht
     if (result.consume) {
       this.inventory.remove(item.id);
       this.consumedItems.add(item.id);
       this.logbook.logCustom('🔧', `${item.label} verbaut.`);
+    }
+
+    // consumeItem: "id" → ein anderes Item als consumed markieren
+    if (result.consumeItem) {
+      this.inventory.remove(item.id);
+      this.consumedItems.add(result.consumeItem);
+      this.logbook.logCustom('🔧', `${item.label} abgestellt.`);
     }
     
     if (result.giveItem) {
@@ -449,9 +504,12 @@ class Game {
         this.logbook.logItem({ label: def.label }, 'found');
       }
     }
-    if (result.puzzle) {
-      this.puzzle.start(result.puzzle, (r) => {
-        if (result.puzzle.onSolveDialog) this.dialog.show(result.puzzle.onSolveDialog);
+    if (result.puzzle || result.startPuzzle) {
+      const cfg = result.puzzle || result.startPuzzle;
+      if (cfg.type === 'cloud_shoot') this.canvas.style.cursor = 'none';
+      this.puzzle.start(cfg, (r) => {
+        this.canvas.style.cursor = 'default';
+        if (cfg.onSolveDialog) this.dialog.show(cfg.onSolveDialog);
       });
     }
   }
@@ -571,6 +629,7 @@ class Game {
     await this.sceneRenderer.load(jsonPath);
     const sceneItems = this.sceneRenderer.sceneData?.items || {};
     this.itemDefs = { ...this.itemDefs, ...sceneItems };
+    this.hotspots.itemDefs = this.itemDefs;
     this._syncObjects(arriveAt);
     const sceneName = this.sceneRenderer.sceneData?.name || jsonPath;
     this.logbook?.logScene(sceneName);
@@ -979,11 +1038,17 @@ class Game {
 
   _startDebugPuzzle(puzzleId) {
     const puzzles = {
-      'cloud_shoot_1':   { type: 'cloud_shoot', round: 1 },
-      'cloud_shoot_2':   { type: 'cloud_shoot', round: 2 },
+      'cloud_shoot':     { type: 'cloud_shoot', goal: 10 },
+      'cloud_shoot_1':   { type: 'cloud_shoot', goal: 10 },
       'combination_lock':{ type: 'combination_lock', digits: 4, solution: [1,2,3,4], hint: 'Debug' }
     };
     const cfg = puzzles[puzzleId];
-    if (cfg) this.puzzle.start(cfg, r => console.log('Debug puzzle solved:', r));
+    if (cfg) {
+      if (cfg.type === 'cloud_shoot') this.canvas.style.cursor = 'none';
+      this.puzzle.start(cfg, r => {
+        this.canvas.style.cursor = 'default';
+        console.log('Debug puzzle solved:', r);
+      });
+    }
   }
 }

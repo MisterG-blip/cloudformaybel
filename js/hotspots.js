@@ -5,8 +5,9 @@
 // ============================================================================
 
 class HotspotSystem {
-  constructor() {
-    this.objects = [];   // aktuelle Objects des Screens
+  constructor(itemDefs = {}) {
+    this.objects  = [];
+    this.itemDefs = itemDefs;
   }
 
   load(objectList) {
@@ -33,7 +34,11 @@ class HotspotSystem {
     }
     // Items verswinden nach einsammeln, sie gelten dann als Consumed
     if (c.itemNotConsumed) return !consumedItems.has(c.itemNotConsumed);
-    if (c.itemConsumed) return consumedItems?.has(c.itemConsumed);
+    if (c.itemConsumed)    return consumedItems?.has(c.itemConsumed);
+    if (c.machineComplete) {
+      const def = this.itemDefs?.[c.machineComplete];
+      return def?.slots?.length > 0 && def.slots.every(slot => slot.item !== null);
+    }
     return true;
   }
 

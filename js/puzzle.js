@@ -32,11 +32,14 @@ class PuzzleSystem {
       this._state = {
         digits,
         values:   new Array(digits).fill(0),
-        selected: 0,   // aktuell markierte Stelle
+        selected: 0,
         shaking:  false,
         shakeTimer: 0,
         solved:   false
       };
+    }
+    if (this.type === 'cloud_shoot') {
+      this._initCloudShoot();
     }
   }
 
@@ -298,219 +301,339 @@ class PuzzleSystem {
 
 // ============================================================================
 // CLOUD SHOOT MINIGAME
-// Wolkenharpune – Runde 1 (freie Jagd) und Runde 2 (Kolben wird dunkel)
+// Zielfernrohr bewegt sich mit der Maus. Wolken ziehen vorbei.
+// Gedrückthalten auf einer Wolke saugt sie ein.
+// 10 Wolken gefangen → Ätherkolben füllt sich → Akt-1-Ende.
 // ============================================================================
 
-// Wird in start() initialisiert wenn type === 'cloud_shoot'
-// Hier die Hilfsmethoden:
-
-PuzzleSystem.prototype._spawnClouds = function() {
+PuzzleSystem.prototype._initCloudShoot = function() {
   const s = this._state;
-  s.clouds = [];
-  const count = 6 + Math.floor(Math.random() * 4); // 6-9 Wolken
-  for (let i = 0; i < count; i++) {
-    s.clouds.push(this._newCloud());
+  s.phase      = 'playing';
+  s.caught     = 0;
+  s.goal       = this.config.goal || 10;
+  s.clouds     = [];
+  s.lensX      = CANVAS_WIDTH  / 2;   // Linsen-Mittelpunkt
+  s.lensY      = CANVAS_HEIGHT / 2;
+  s.lensR      = 160;                  // Radius Zielfernrohr
+  s.holding    = false;                // Maustaste/Touch gehalten
+  s.holdTarget = null;                 // Wolke die gerade eingesogen wird
+  s.holdProgress = 0;                  // 0 → 1
+  s.holdDuration = 900;                // ms zum vollständigen Einsaugen
+  s.endTimer   = 0;
+  s.kolbenFill = 0;                    // 0 → 1 für Ätherkolben-Animation
+
+  // Wolken-Pool spawnen
+  for (let i = 0; i < 8; i++) {
+    s.clouds.push(this._newCloud(i === 0));
   }
 };
 
-PuzzleSystem.prototype._newCloud = function() {
-  const size = 50 + Math.random() * 60;
+PuzzleSystem.prototype._newCloud = function(startOnscreen = false) {
+  const size  = 55 + Math.random() * 55;
+  const y     = 50 + Math.random() * (CANVAS_HEIGHT - 150);
+  const x     = startOnscreen
+    ? Math.random() * CANVAS_WIDTH
+    : CANVAS_WIDTH + size + Math.random() * 200;
   return {
-    x:       CANVAS_WIDTH + size,              // startet rechts außen
-    y:       60 + Math.random() * 320,
-    size,
-    speed:   40 + Math.random() * 60,          // px/s
-    alpha:   0.85 + Math.random() * 0.15,
-    clicked: false,
-    clickAnim: 0                               // 0→1 Einsammel-Animation
+    x, y, size,
+    speed:     25 + Math.random() * 35,   // px/s, langsam
+    alpha:     0.82 + Math.random() * 0.18,
+    sucked:    false,
+    suckAnim:  0                           // 0 → 1
   };
 };
 
-PuzzleSystem.prototype._handleCloudShootClick = function(x, y) {
+PuzzleSystem.prototype._handleCloudShootInput = function(x, y, holding) {
   const s = this._state;
-  if (s.phase !== 'playing') return true;
-
-  // Treffer auf Wolke?
-  for (const c of s.clouds) {
-    if (c.clicked) continue;
-    const dx = x - c.x, dy = y - c.y;
-    if (Math.hypot(dx, dy) < c.size * 0.6) {
-      c.clicked   = true;
-      c.clickAnim = 0;
-      s.caught++;
-      return true;
-    }
+  if (s.phase !== 'playing') return;
+  s.lensX   = x;
+  s.lensY   = y;
+  s.holding = holding;
+  if (!holding) {
+    s.holdTarget   = null;
+    s.holdProgress = 0;
   }
+};
+
+PuzzleSystem.prototype._handleCloudShootClick = function(x, y) {
+  // Einzel-Klick: kein Effekt im cloud_shoot (nur gedrückthalten zählt)
   return true;
 };
 
 PuzzleSystem.prototype._updateCloudShoot = function(deltaTime) {
   const s = this._state;
+  if (s.phase !== 'playing') {
+    if (s.phase === 'ending') {
+      s.endTimer  -= deltaTime;
+      s.kolbenFill = Math.min(1, s.kolbenFill + deltaTime / 2000);
+      if (s.endTimer <= 0) {
+        s.phase = 'done';
+        this.close();
+        if (this.onSolve) this.onSolve({ caught: s.caught });
+      }
+    }
+    return;
+  }
 
-  if (s.phase === 'playing') {
-    s.timeLeft -= deltaTime;
+  // Wolken bewegen
+  for (const c of s.clouds) {
+    if (c.sucked) {
+      c.suckAnim = Math.min(1, c.suckAnim + deltaTime / 350);
+      // Fertig eingesogen → neu spawnen
+      if (c.suckAnim >= 1) {
+        if (s.holdTarget === c) { s.holdTarget = null; s.holdProgress = 0; }
+        Object.assign(c, this._newCloud(false));
+      }
+      continue;
+    }
+    c.x -= c.speed * (deltaTime / 1000);
+    if (c.x < -c.size * 2) Object.assign(c, this._newCloud(false));
+  }
 
-    // Wolken bewegen
-    for (const c of s.clouds) {
-      if (!c.clicked) {
-        c.x -= c.speed * (deltaTime / 1000);
-        // Wenn Wolke links raus → neu spawnen rechts
-        if (c.x < -c.size * 1.5) {
-          Object.assign(c, this._newCloud());
+  // Gedrückthalten → Wolke einsaugen
+  if (s.holding) {
+    // Ziel-Wolke bestimmen: nächste ungesaugte Wolke im Linsen-Radius
+    if (!s.holdTarget) {
+      for (const c of s.clouds) {
+        if (c.sucked) continue;
+        if (Math.hypot(c.x - s.lensX, c.y - s.lensY) < s.lensR * 0.65) {
+          s.holdTarget   = c;
+          s.holdProgress = 0;
+          break;
         }
-      } else {
-        // Einsammel-Animation
-        c.clickAnim = Math.min(1, c.clickAnim + deltaTime / 400);
       }
     }
 
-    // Runde 2: Kolben verdunkelt sich
-    if (s.round === 2) {
-      s.darkening = Math.max(0, Math.min(1, 1 - s.timeLeft / 15000));
+    if (s.holdTarget && !s.holdTarget.sucked) {
+      // Noch im Radius?
+      if (Math.hypot(s.holdTarget.x - s.lensX, s.holdTarget.y - s.lensY) < s.lensR * 0.8) {
+        s.holdProgress += deltaTime / s.holdDuration;
+        if (s.holdProgress >= 1) {
+          s.holdTarget.sucked = true;
+          s.holdTarget        = null;
+          s.holdProgress      = 0;
+          s.caught++;
+          if (s.caught >= s.goal) {
+            s.phase    = 'ending';
+            s.endTimer = 3500;
+          }
+        }
+      } else {
+        // Ziel verlassen
+        s.holdTarget   = null;
+        s.holdProgress = 0;
+      }
     }
-
-    // Zeit abgelaufen
-    if (s.timeLeft <= 0) {
-      s.phase    = 'ending';
-      s.endTimer = s.round === 2 ? 3000 : 1500; // Runde 2 länger für Effekt
-    }
-  }
-
-  if (s.phase === 'ending') {
-    s.endTimer -= deltaTime;
-    if (s.endTimer <= 0) {
-      s.phase = 'done';
-      this.close();
-      if (this.onSolve) this.onSolve({ caught: s.caught, round: s.round });
-    }
+  } else {
+    s.holdTarget   = null;
+    s.holdProgress = 0;
   }
 };
 
 PuzzleSystem.prototype._drawCloudShoot = function(ctx) {
-  const s = this._state;
+  const s  = this._state;
+  const lx = s.lensX, ly = s.lensY, lr = s.lensR;
 
-  // Fernrohr-Maske: schwarzes Bild mit kreisförmigem Ausschnitt
-  ctx.fillStyle = '#000';
+  // ── Hintergrund: Nachthimmel ──────────────────────────────────────────────
+  const sky = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+  sky.addColorStop(0, '#0a0e2a');
+  sky.addColorStop(1, '#1a2a4a');
+  ctx.fillStyle = sky;
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  // Kreisausschnitt freistellen
-  const cx = CANVAS_WIDTH  / 2;
-  const cy = CANVAS_HEIGHT / 2 - 30;
-  const r  = 220;
+  // Sterne
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  // Deterministisch via seed
+  for (let i = 0; i < 60; i++) {
+    const sx = ((i * 137 + 42) % CANVAS_WIDTH);
+    const sy = ((i * 97  + 13) % (CANVAS_HEIGHT * 0.7));
+    const sr = 0.5 + (i % 3) * 0.5;
+    ctx.beginPath();
+    ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
+  // ── Wolken hinter der Linse ───────────────────────────────────────────────
+  for (const c of s.clouds) {
+    if (c.suckAnim >= 1) continue;
+    ctx.save();
+    if (c.sucked) {
+      // Zum Linsenmittelpunkt ziehen + schrumpfen
+      const cx = c.x + (lx - c.x) * c.suckAnim;
+      const cy = c.y + (ly - c.y) * c.suckAnim;
+      ctx.translate(cx, cy);
+      ctx.globalAlpha = c.alpha * (1 - c.suckAnim);
+      ctx.scale(1 - c.suckAnim * 0.8, 1 - c.suckAnim * 0.8);
+    } else {
+      ctx.translate(c.x, c.y);
+      ctx.globalAlpha = c.alpha * 0.25; // außerhalb der Linse: kaum sichtbar
+    }
+    this._drawCloudShape(ctx, c.size, '#aac8e8');
+    ctx.restore();
+  }
+
+  // ── Linsen-Clip: Innere Sicht ─────────────────────────────────────────────
   ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.arc(lx, ly, lr, 0, Math.PI * 2);
   ctx.clip();
 
-  // Himmel
-  const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-  skyGrad.addColorStop(0, s.round === 2 ? '#4a3a5a' : '#87CEEB');
-  skyGrad.addColorStop(1, s.round === 2 ? '#2a1a3a' : '#dff0fa');
-  ctx.fillStyle = skyGrad;
+  // Heller Tageshimmel durch die Linse
+  const innerSky = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+  innerSky.addColorStop(0, '#87CEEB');
+  innerSky.addColorStop(1, '#dff0fa');
+  ctx.fillStyle = innerSky;
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  // Wolken zeichnen
+  // Wolken in der Linse (voll sichtbar)
   for (const c of s.clouds) {
-    if (c.clickAnim >= 1) continue; // verschwunden
-
+    if (c.suckAnim >= 1) continue;
     ctx.save();
-    if (c.clicked) {
-      // Einsammel-Animation: nach oben schweben + ausblenden
-      ctx.translate(c.x, c.y - c.clickAnim * 40);
-      ctx.globalAlpha = c.alpha * (1 - c.clickAnim);
-      ctx.scale(1 + c.clickAnim * 0.3, 1 + c.clickAnim * 0.3);
+    if (c.sucked) {
+      const cx = c.x + (lx - c.x) * c.suckAnim;
+      const cy = c.y + (ly - c.y) * c.suckAnim;
+      ctx.translate(cx, cy);
+      ctx.globalAlpha = 1 - c.suckAnim;
+      ctx.scale(1 - c.suckAnim * 0.8, 1 - c.suckAnim * 0.8);
     } else {
       ctx.translate(c.x, c.y);
       ctx.globalAlpha = c.alpha;
     }
-
-    // Wolke als weiche Ellipsen
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.ellipse(0,              0,          c.size * 0.5, c.size * 0.35, 0, 0, Math.PI * 2);
-    ctx.ellipse(-c.size * 0.3,  c.size * 0.1, c.size * 0.32, c.size * 0.28, 0, 0, Math.PI * 2);
-    ctx.ellipse( c.size * 0.3,  c.size * 0.1, c.size * 0.32, c.size * 0.28, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Fadenkreuz wenn nicht geklickt
-    if (!c.clicked) {
-      ctx.strokeStyle = 'rgba(255,80,80,0.5)';
-      ctx.lineWidth   = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(-c.size * 0.7, 0); ctx.lineTo(c.size * 0.7, 0);
-      ctx.moveTo(0, -c.size * 0.7); ctx.lineTo(0, c.size * 0.7);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0, 0, c.size * 0.6, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+    this._drawCloudShape(ctx, c.size, '#ffffff');
     ctx.restore();
   }
 
-  // Runde 2: Kolben-Verdunkelung als Overlay
-  if (s.round === 2 && s.darkening > 0) {
-    ctx.fillStyle = `rgba(20,0,40,${s.darkening * 0.6})`;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  // Einsaug-Fortschritt: Wirbel-Ring
+  if (s.holding && s.holdTarget && s.holdProgress > 0) {
+    const p = s.holdProgress;
+    ctx.save();
+    ctx.translate(s.holdTarget.x, s.holdTarget.y);
+    ctx.strokeStyle = `rgba(120,200,255,${0.4 + p * 0.5})`;
+    ctx.lineWidth   = 3 + p * 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, s.holdTarget.size * (1.1 - p * 0.4), -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p);
+    ctx.stroke();
+    ctx.restore();
   }
 
   ctx.restore(); // Clip aufheben
 
-  // Fernrohr-Rahmen
-  ctx.strokeStyle = '#1a1a1a';
-  ctx.lineWidth   = 80;
+  // ── Linsen-Rahmen & Fadenkreuz ────────────────────────────────────────────
+  // Äußerer schwarzer Ring
+  ctx.strokeStyle = '#0a0e1a';
+  ctx.lineWidth   = 70;
   ctx.beginPath();
-  ctx.arc(cx, cy, r + 40, 0, Math.PI * 2);
+  ctx.arc(lx, ly, lr + 35, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Fernrohr-Vignette
-  const vign = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r);
-  vign.addColorStop(0,   'rgba(0,0,0,0)');
-  vign.addColorStop(1,   'rgba(0,0,0,0.5)');
+  // Glasrand
+  ctx.strokeStyle = '#3a5a7a';
+  ctx.lineWidth   = 4;
+  ctx.beginPath();
+  ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Vignette
+  const vign = ctx.createRadialGradient(lx, ly, lr * 0.55, lx, ly, lr);
+  vign.addColorStop(0, 'rgba(0,0,0,0)');
+  vign.addColorStop(1, 'rgba(0,0,0,0.4)');
   ctx.fillStyle = vign;
   ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.arc(lx, ly, lr, 0, Math.PI * 2);
   ctx.fill();
 
-  // Timer-Anzeige
-  const secLeft = Math.max(0, Math.ceil(s.timeLeft / 1000));
-  ctx.font      = 'bold 22px monospace';
-  ctx.fillStyle = secLeft <= 5 ? '#ff6060' : '#fff';
-  ctx.textAlign = 'center';
-  ctx.fillText(`⏱ ${secLeft}s`, cx, cy + r + 55);
+  // Fadenkreuz
+  const fc = s.holding ? 'rgba(80,200,255,0.9)' : 'rgba(255,80,80,0.8)';
+  ctx.strokeStyle = fc;
+  ctx.lineWidth   = 1.5;
+  // Horizontale Linie
+  ctx.beginPath();
+  ctx.moveTo(lx - lr * 0.9, ly); ctx.lineTo(lx - lr * 0.15, ly);
+  ctx.moveTo(lx + lr * 0.15, ly); ctx.lineTo(lx + lr * 0.9, ly);
+  ctx.stroke();
+  // Vertikale Linie
+  ctx.beginPath();
+  ctx.moveTo(lx, ly - lr * 0.9); ctx.lineTo(lx, ly - lr * 0.15);
+  ctx.moveTo(lx, ly + lr * 0.15); ctx.lineTo(lx, ly + lr * 0.9);
+  ctx.stroke();
+  // Mittelkreis
+  ctx.beginPath();
+  ctx.arc(lx, ly, lr * 0.13, 0, Math.PI * 2);
+  ctx.stroke();
 
-  // Gefangene Wolken
-  ctx.font      = '16px sans-serif';
-  ctx.fillStyle = '#fff';
-  ctx.fillText(`☁️ ${s.caught}`, cx, cy + r + 80);
+  // ── HUD: Ätherkolben-Füllung ──────────────────────────────────────────────
+  const fill    = s.phase === 'ending' ? s.kolbenFill : s.caught / s.goal;
+  const kolbenX = CANVAS_WIDTH - 60, kolbenY = 30;
+  const kolbenW = 28, kolbenH = 90;
 
-  // Runde 2: Warnung
-  if (s.round === 2 && s.darkening > 0.3) {
-    ctx.globalAlpha = s.darkening;
-    ctx.font      = 'bold 14px sans-serif';
-    ctx.fillStyle = '#ff9060';
-    ctx.fillText('Der Ätherkolben wird dunkler...', cx, cy - r - 20);
-    ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.beginPath();
+  ctx.roundRect(kolbenX - 4, kolbenY - 4, kolbenW + 8, kolbenH + 8, 6);
+  ctx.fill();
+
+  // Leerer Kolben
+  ctx.strokeStyle = 'rgba(180,220,255,0.7)';
+  ctx.lineWidth   = 2;
+  ctx.strokeRect(kolbenX, kolbenY, kolbenW, kolbenH);
+
+  // Füllung (Wolkennebel: bläulich-weiß)
+  if (fill > 0) {
+    const fillH = kolbenH * fill;
+    const nebel = ctx.createLinearGradient(0, kolbenY + kolbenH - fillH, 0, kolbenY + kolbenH);
+    nebel.addColorStop(0, 'rgba(180,220,255,0.6)');
+    nebel.addColorStop(1, 'rgba(220,240,255,0.9)');
+    ctx.fillStyle = nebel;
+    ctx.fillRect(kolbenX, kolbenY + kolbenH - fillH, kolbenW, fillH);
   }
 
-  // Ending-Phase: Abschluss-Text
-  if (s.phase === 'ending') {
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.font      = 'bold 20px sans-serif';
-    ctx.fillStyle = s.round === 2 ? '#ff9060' : '#ffe080';
+  // Kolben-Label
+  ctx.font      = '11px sans-serif';
+  ctx.fillStyle = 'rgba(200,230,255,0.8)';
+  ctx.textAlign = 'center';
+  ctx.fillText('☁', kolbenX + kolbenW / 2, kolbenY + kolbenH + 16);
+
+  // Zähler
+  ctx.font      = 'bold 14px monospace';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(`${s.caught}/${s.goal}`, kolbenX + kolbenW / 2, kolbenY - 12);
+
+  // Hinweis (nur am Anfang)
+  if (s.caught === 0) {
+    ctx.font      = '13px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    if (s.round === 1) {
-      ctx.fillText(`Fantastisch! ${s.caught} Wolken gefangen!`, cx, CANVAS_HEIGHT / 2);
-      ctx.font = '15px sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.fillText('Die Maschine läuft!', cx, CANVAS_HEIGHT / 2 + 35);
-    } else {
-      ctx.fillText('Etwas stimmt nicht...', cx, CANVAS_HEIGHT / 2 - 20);
-      ctx.font = '15px sans-serif';
-      ctx.fillStyle = 'rgba(255,150,100,0.9)';
-      ctx.fillText('Der Ätherkolben wird immer dunkler.', cx, CANVAS_HEIGHT / 2 + 20);
+    ctx.fillText('Gedrückt halten zum Einsaugen', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 20);
+  }
+
+  // ── Ending-Overlay ────────────────────────────────────────────────────────
+  if (s.phase === 'ending') {
+    const t = 1 - (s.endTimer / 3500);
+    ctx.fillStyle = `rgba(10,14,42,${Math.min(0.85, t * 1.5)})`;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    if (t > 0.4) {
+      ctx.globalAlpha = Math.min(1, (t - 0.4) * 2.5);
+      ctx.font        = 'bold 24px sans-serif';
+      ctx.fillStyle   = '#c8e8ff';
+      ctx.textAlign   = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Der Ätherkolben ist gefüllt.', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 20);
+      ctx.font        = '16px sans-serif';
+      ctx.fillStyle   = 'rgba(180,210,255,0.8)';
+      ctx.fillText('Ende von Akt I', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
+      ctx.globalAlpha = 1;
     }
   }
+
+  ctx.textBaseline = 'alphabetic';
+};
+
+PuzzleSystem.prototype._drawCloudShape = function(ctx, size, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse( 0,              0,            size * 0.50, size * 0.33, 0, 0, Math.PI * 2);
+  ctx.ellipse(-size * 0.30,    size * 0.08,  size * 0.30, size * 0.26, 0, 0, Math.PI * 2);
+  ctx.ellipse( size * 0.30,    size * 0.08,  size * 0.30, size * 0.26, 0, 0, Math.PI * 2);
+  ctx.ellipse( size * 0.05,   -size * 0.12,  size * 0.22, size * 0.20, 0, 0, Math.PI * 2);
+  ctx.fill();
 };
