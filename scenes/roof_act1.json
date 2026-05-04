@@ -3,7 +3,7 @@
   "screens": [{
     "id": "screen_1",
     "layers": [
-      { "src": "assets/scenes/roof/act1/bg.png", "placeholder": "#c8dff0" }
+      { "src": "assets/scenes/roof/act1/bg.png", "placeholder": "#c8dff0" }      
     ],
     "walkarea": {
         "points": [
@@ -60,23 +60,56 @@
         "actions": {
           "look": "Man soll nicht in die Sonne gucken.",
           "take": "Viel zu weit weg! Vielleicht kann man sie mit einer Zange packen.",
-          "use":  "Mit einem Solarpanal vielleicht. Aber hier ist keines. Vielleicht geht es auch anders."
+          "use":  "Mit einem Solarpanal vielleicht. Aber hier ist keines. Vielleicht geht es auch anders.",
+          "useWith": {
+            "phlogiston_zange": {
+              "text": "Die Eszens des Feuers... Phlogiston!!!",
+              "giveItem": "phlogiston" 
+            }
+          }
         }
       },
       {
         "id": "stellplatz",
-        "x": 584, "y": 321, "w": 100, "h": 50,
+        "x": 584, "y": 321, "w": 100, "h": 100,
         "label": "Stellplatz",
         "glow": null,
-        "condition": {"itemInInventory": "vakuumpumpe"},
+        "condition": {
+          "allConditions": [
+              { "machineComplete": "vakuumpumpe" },
+              { "itemNotConsumed": "vakuumpumpe_placed" }              
+          ]
+        },
         "actions": {
           "look": "Ein freier Platz auf dem Dach. Genau die richtige Größe für eine Maschine.",
           "take": null,
-          "use":  "Ich sollte die Pumpe einfach hier abstellen.",
+          "use": "Ich sollte die Pumpe einfach hier abstellen.",
           "useWith": {
             "vakuumpumpe": {
               "dialog": "✨ Die Vakuumpumpe steht! Sie surrt leise und zeigt auf die Wolken.",
-              "consume": true
+              "consumeItem": "vakuumpumpe_placed"
+            }
+          }
+        }
+      },
+      {
+        "id": "vakuumpumpe_placed",
+        "src": "assets/items/vakuumpumpe_placed1.png",
+        "x": 584, "y": 221, "w": 150, "h": 150,
+        "label": "Vakuumpumpe",
+        "glow": null,
+        "condition": { "itemConsumed": "vakuumpumpe_placed" },
+        "actions": {
+          "look": "Die Vakuumpumpe ist bereit. Es fehlt noch an Energie. Solar wäre nice!",
+          "take": "Sie ist fest verankert. Die bleibt hier.",
+          "use":  "Ohne Energie geht hier nichts. Wind Energie haben wir nicht.",
+          "useWith": {
+            "phlogiston": {
+              "dialog": "Das Phlogiston startet die Pumpe! Los schnell an die Wolkenharpune...",
+              "startPuzzle": {
+                "type": "cloud_shoot",
+                "goal": 10
+              }
             }
           }
         }

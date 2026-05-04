@@ -79,6 +79,13 @@
     "machinePart": false,
     "act": 1
   },
+  "phlogiston": {
+    "emoji": "⚡", "label": "Phlogiston",
+    "description": "Energie ist Macht! Ich habe nun Macht!",
+    "src": "assets/items/phlogiston.png",
+    "machinePart": false,
+    "act": 1
+  },
 
   "kosmisches_ei": {
     "emoji": "🥚", "label": "Kosmisches Ei",
